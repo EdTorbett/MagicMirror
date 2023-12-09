@@ -7,7 +7,7 @@
 #include <iostream>
 #include <utility>
 
-char default_font[] = "/home/magicmirror/Documents/freetype-gl/fonts/Vera.ttf";
+char default_font[] = "../Poppins/Poppins-Medium.ttf";
 
 
 void text_init() {
