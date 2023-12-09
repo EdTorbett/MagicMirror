@@ -1,9 +1,9 @@
 #include <SDL.h>
-#include <cstring>
 #include <iostream>
-#include <thread>
+#include <fstream>
 
 #include "RenderableText.h"
+#include "HomeAssistant.h"
 
 using namespace std::chrono_literals;
 using std::clog;
@@ -33,9 +33,13 @@ int main()
         exit(EXIT_FAILURE);
     }
 
+    HomeAssistant homeAssistant;
+
     RenderableText hello_world("Hello, World!", 48.0);
 
     SDL_Event event;
+
+    homeAssistant.getCalendar();
 
     size_t frame_count = 0;
     int x_dir = 1;
