@@ -8,7 +8,6 @@
 #include <chrono>
 #include "HomeAssistant.h"
 #include <nlohmann/json.hpp>
-#include <iomanip>
 
 HomeAssistant::HomeAssistant() :
     m_token(),
@@ -44,8 +43,6 @@ void HomeAssistant::fetchCalendar() {
     ss << "/api/calendars/calendar.shared_calendar?start=" << cal_start << "&end=" << cal_end;
     RestClient::Response r = m_connection->get(ss.str());
     nlohmann::json json_result = nlohmann::json::parse(r.body);
-
-    std::cout << std::setw(2) << json_result;
 
     this->m_calendar.clear();
 
