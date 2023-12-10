@@ -17,10 +17,14 @@ include_directories(MagicMirror
 )
 
 add_executable(MagicMirror main.cpp
+        Renderable.cpp
+        Renderable.h
         RenderableText.cpp
         RenderableText.h
         HomeAssistant.cpp
         HomeAssistant.h
+        CalendarEntry.cpp
+        CalendarEntry.h
 )
 
 target_link_libraries(MagicMirror PRIVATE
