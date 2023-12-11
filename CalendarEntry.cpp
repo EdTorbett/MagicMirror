@@ -4,6 +4,7 @@
 
 #include "CalendarEntry.h"
 #include <sstream>
+#include <sstream>
 
 const std::string DAYS_OF_WEEK[] = {
     "Sunday",
@@ -30,6 +31,11 @@ const std::string MONTHS[] = {
         "December"
 };
 
+const std::string START_KEY = "start";
+const std::string END_KEY = "end";
+const std::string DATE_KEY = "date";
+const std::string DATETIME_KEY = "dateTime";
+
 CalendarEntry::CalendarEntry(const nlohmann::json &entry, const std::chrono::system_clock::time_point &now) :
 date(nullptr),
 description(nullptr),
@@ -37,16 +43,17 @@ time(nullptr),
 location(nullptr),
 daysRemaining(nullptr) {
     time_t event_start_time_t;
-    struct tm event_time({0});
+    tm event_time({0});
     if (entry.contains("start")) {
         std::string startTime;
         std::ostringstream oss;
-        if (entry["start"].contains("dateTime")) {
-            std::istringstream ss(std::string(entry["start"]["dateTime"]).substr(0, 10));
+        const nlohmann::json &start = entry[START_KEY];
+        if (start.contains(DATETIME_KEY)) {
+            std::istringstream ss(std::string(start[DATETIME_KEY]).substr(0, 10));
             ss >> std::get_time(&event_time, "%Y-%m-%d");
-            startTime = "Starts at " + std::string(entry["start"]["dateTime"]).substr(11, 5);
-        } else if (entry["start"].contains("date")) {
-            std::string d = entry["start"]["date"];
+            startTime = "Starts at " + std::string(start[DATETIME_KEY]).substr(11, 5);
+        } else if (start.contains(DATETIME_KEY)) {
+            std::string d = start[DATE_KEY];
             std::istringstream ss(d);
             ss >> std::get_time(&event_time, "%Y-%m-%d");
         }
@@ -78,8 +85,8 @@ daysRemaining(nullptr) {
         }
     }
 
-    if (entry.contains("end") && entry["end"].contains("date")) {
-        std::string d = entry["end"]["date"];
+    if (entry.contains(END_KEY) && entry[END_KEY].contains(DATE_KEY)) {
+        std::string d = entry[END_KEY][DATE_KEY];
         std::istringstream ss(d);
         ss >> std::get_time(&event_time, "%Y-%m-%d");
         time_t event_end_time_t = mktime(&event_time);

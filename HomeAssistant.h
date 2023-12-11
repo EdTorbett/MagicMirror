@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <connection.h>
+#include <memory>
 #include <restclient.h>
 #include "CalendarEntry.h"
 

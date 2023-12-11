@@ -10,12 +10,15 @@
 #include <nlohmann/json.hpp>
 
 HomeAssistant::HomeAssistant() :
+    m_url(),
     m_token(),
     m_connection(nullptr)
 {
     RestClient::init();
 
     std::ifstream token_file("../token");
+    std::string tmp;
+
     if (token_file.is_open())
     {
         getline(token_file,m_url);
@@ -33,7 +36,7 @@ HomeAssistant::HomeAssistant() :
 
 void HomeAssistant::fetchCalendar() {
     auto const time = std::chrono::system_clock::now();
-    std::time_t now =     std::chrono::system_clock::to_time_t(time);
+    std::time_t now = std::chrono::system_clock::to_time_t(time);
     std::string cal_start(30, '\0');
     cal_start.resize(std::strftime(&cal_start[0], cal_start.size(), "%Y-%m-%dT00:00:00.000Z", std::localtime(&now)));
     now += (86400 * 30);
@@ -46,12 +49,12 @@ void HomeAssistant::fetchCalendar() {
 
     this->m_calendar.clear();
 
-    int y_offset = 0;
+    int y_offset = 20;
     int count = 0;
 
     for (const auto& item : json_result) {
         auto *entry = new CalendarEntry(item, time);
-        entry->set_pos(0, y_offset);
+        entry->set_pos(60, y_offset);
         y_offset += entry->h();
         this->m_calendar.emplace_back(entry);
         if (++count == 10) {
