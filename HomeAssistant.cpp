@@ -60,6 +60,12 @@ void HomeAssistant::fetchCalendar() {
     }
 }
 
+void HomeAssistant::fetchForecast() {
+    RestClient::Response r = m_connection->get("/api/services");
+    nlohmann::json json_result = nlohmann::json::parse(r.body);
+    std::cout << std::setw(2) << json_result;
+}
+
 void HomeAssistant::render(SDL_Renderer *renderer) {
     for (auto& entry : this->m_calendar) {
         entry->render(renderer);

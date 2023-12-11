@@ -17,6 +17,7 @@ class HomeAssistant {
 public:
     HomeAssistant();
     void fetchCalendar();
+    void fetchForecast();
     void render(SDL_Renderer *renderer);
 private:
     std::string m_url;
