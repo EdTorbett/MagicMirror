@@ -64,9 +64,18 @@ void HomeAssistant::fetchCalendar() {
 }
 
 void HomeAssistant::fetchForecast() {
-    RestClient::Response r = m_connection->get("/api/services");
+    RestClient::Response r = m_connection->get("/api/states/input_text.hourly_weather_1");
     nlohmann::json json_result = nlohmann::json::parse(r.body);
-    std::cout << std::setw(2) << json_result;
+    std::cout << json_result["state"] << std::endl;
+    r = m_connection->get("/api/states/input_text.hourly_weather_2");
+    json_result = nlohmann::json::parse(r.body);
+    std::cout << json_result["state"] << std::endl;
+    r = m_connection->get("/api/states/input_text.hourly_weather_3");
+    json_result = nlohmann::json::parse(r.body);
+    std::cout << json_result["state"] << std::endl;
+    r = m_connection->get("/api/states/input_text.hourly_weather_4");
+    json_result = nlohmann::json::parse(r.body);
+    std::cout << json_result["state"] << std::endl;
 }
 
 void HomeAssistant::render(SDL_Renderer *renderer) {
