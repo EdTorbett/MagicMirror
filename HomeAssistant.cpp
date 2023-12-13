@@ -65,7 +65,7 @@ HomeAssistant::HomeAssistant() :
     m_connection->SetHeaders(headers);
     m_connection->SetTimeout(10);
 
-    m_date = new RenderableText("Date goes here", 80, WHITE, FONTTYPE_MONO);
+    m_date = new RenderableText("Date goes here", 80, WHITE, FONTTYPE_REGULAR);
     m_clock = new RenderableText("00:00:00", 80, WHITE, FONTTYPE_MONO);
 }
 
@@ -149,6 +149,6 @@ void HomeAssistant::render(SDL_Renderer *renderer) {
     os.clear();
     os << std::put_time(timeinfo, "%H:%M:%S");
     m_clock->set_text(os.str());
-    m_clock->set_pos(1920 - 60 - m_clock->w(), 1080 - 20 - m_clock->h() - m_date->h());
+    m_clock->set_pos(1920 - 60 - m_clock->w(), 1080 + 10 - m_clock->h() - m_date->h());
     m_clock->render(renderer);
 }
