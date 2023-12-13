@@ -7,11 +7,43 @@
 #include <sstream>
 #include <chrono>
 #include "HomeAssistant.h"
+
+#include <iomanip>
 #include <nlohmann/json.hpp>
+#include <restclient.h>
+
+#include "WeatherEntry.h"
+
+const std::string DAYS_OF_WEEK[] = {
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday"
+};
+
+const std::string MONTHS[] = {
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+};
 
 HomeAssistant::HomeAssistant() :
     m_url(),
     m_token(),
+    m_date(nullptr),
+    m_clock(nullptr),
     m_connection(nullptr)
 {
     RestClient::init();
@@ -32,6 +64,9 @@ HomeAssistant::HomeAssistant() :
     headers["Authorization"] = m_token;
     m_connection->SetHeaders(headers);
     m_connection->SetTimeout(10);
+
+    m_date = new RenderableText("Date goes here", 80, WHITE, FONTTYPE_MONO);
+    m_clock = new RenderableText("00:00:00", 80, WHITE, FONTTYPE_MONO);
 }
 
 void HomeAssistant::fetchCalendar() {
@@ -49,7 +84,7 @@ void HomeAssistant::fetchCalendar() {
 
     this->m_calendar.clear();
 
-    int y_offset = 20;
+    int y_offset = 100;
     int count = 0;
 
     for (const auto& item : json_result) {
@@ -63,23 +98,57 @@ void HomeAssistant::fetchCalendar() {
     }
 }
 
+void split_weather (std::vector<std::shared_ptr<WeatherEntry>> &result, const std::string &s) {
+    std::stringstream ss(s);
+    std::string item;
+
+    int x_offset = 60 + static_cast<int>(150 * result.size());
+
+    while (getline (ss, item, ';')) {
+        auto *entry = new WeatherEntry(item);
+        entry->set_pos(x_offset, 20);
+        x_offset += entry->w();
+        result.emplace_back(entry);
+    }
+}
+
 void HomeAssistant::fetchForecast() {
     RestClient::Response r = m_connection->get("/api/states/input_text.hourly_weather_1");
+    m_forecast.clear();
     nlohmann::json json_result = nlohmann::json::parse(r.body);
-    std::cout << json_result["state"] << std::endl;
+    split_weather(m_forecast, json_result["state"]);
     r = m_connection->get("/api/states/input_text.hourly_weather_2");
     json_result = nlohmann::json::parse(r.body);
-    std::cout << json_result["state"] << std::endl;
+    split_weather(m_forecast, json_result["state"]);
     r = m_connection->get("/api/states/input_text.hourly_weather_3");
     json_result = nlohmann::json::parse(r.body);
-    std::cout << json_result["state"] << std::endl;
+    split_weather(m_forecast, json_result["state"]);
     r = m_connection->get("/api/states/input_text.hourly_weather_4");
     json_result = nlohmann::json::parse(r.body);
-    std::cout << json_result["state"] << std::endl;
+    split_weather(m_forecast, json_result["state"]);
 }
 
 void HomeAssistant::render(SDL_Renderer *renderer) {
     for (auto& entry : this->m_calendar) {
         entry->render(renderer);
     }
+    for (auto& entry : this->m_forecast) {
+        entry->render(renderer);
+    }
+
+    time_t rawtime;
+    time ( &rawtime );
+    const tm* timeinfo = localtime(&rawtime);
+    std::ostringstream os;
+    os << DAYS_OF_WEEK[timeinfo->tm_wday] << " " << std::setw(2) << timeinfo->tm_mday << " " << MONTHS[timeinfo->tm_mon];
+    m_date->set_text(os.str());
+    m_date->set_pos(1920 - 60 - m_date->w(), 1080 - 20 - m_date->h());
+    m_date->render(renderer);
+
+    os.str("");
+    os.clear();
+    os << std::put_time(timeinfo, "%H:%M:%S");
+    m_clock->set_text(os.str());
+    m_clock->set_pos(1920 - 60 - m_clock->w(), 1080 - 20 - m_clock->h() - m_date->h());
+    m_clock->render(renderer);
 }

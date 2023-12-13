@@ -4,7 +4,6 @@
 
 #include "CalendarEntry.h"
 #include <sstream>
-#include <sstream>
 
 const std::string DAYS_OF_WEEK[] = {
     "Sunday",
@@ -52,7 +51,7 @@ daysRemaining(nullptr) {
             std::istringstream ss(std::string(start[DATETIME_KEY]).substr(0, 10));
             ss >> std::get_time(&event_time, "%Y-%m-%d");
             startTime = "Starts at " + std::string(start[DATETIME_KEY]).substr(11, 5);
-        } else if (start.contains(DATETIME_KEY)) {
+        } else if (start.contains(DATE_KEY)) {
             std::string d = start[DATE_KEY];
             std::istringstream ss(d);
             ss >> std::get_time(&event_time, "%Y-%m-%d");
@@ -63,7 +62,7 @@ daysRemaining(nullptr) {
         oss.str("");
         oss.clear();
         oss << DAYS_OF_WEEK[event_time.tm_wday] << " " << std::setw(2) << event_time.tm_mday << " " << MONTHS[event_time.tm_mon];
-        this->date = new RenderableText(oss.str(), 16, YELLOW, true);
+        this->date = new RenderableText(oss.str(), 16, YELLOW, FONTTYPE_MONO);
 
         auto event_date = std::chrono::system_clock::from_time_t(event_start_time_t);
         auto days_till_event = floor<std::chrono::hours>(event_date - now).count() / 24;
@@ -78,10 +77,10 @@ daysRemaining(nullptr) {
             oss << days_till_event << " days time";
         }
 
-        this->daysRemaining = new RenderableText(oss.str(), 16, YELLOW, true);
+        this->daysRemaining = new RenderableText(oss.str(), 16, YELLOW, FONTTYPE_MONO);
 
         if (!startTime.empty()) {
-            this->time = new RenderableText(startTime, 16, YELLOW, true);
+            this->time = new RenderableText(startTime, 16, YELLOW, FONTTYPE_MONO);
         }
     }
 
@@ -99,14 +98,14 @@ daysRemaining(nullptr) {
             oss << "Until " << DAYS_OF_WEEK[event_time.tm_wday] << " " << std::setw(2) << event_time.tm_mday << " "
                 << MONTHS[event_time.tm_mon];
         }
-        this->time = new RenderableText(oss.str(), 16, YELLOW, true);
+        this->time = new RenderableText(oss.str(), 16, YELLOW, FONTTYPE_MONO);
     }
 
     if (entry.contains("summary") and entry["summary"] != nullptr) {
-        this->description = new RenderableText(entry["summary"], 22, WHITE, false);
+        this->description = new RenderableText(entry["summary"], 22, WHITE, FONTTYPE_REGULAR);
     }
     if (entry.contains("location") and entry["location"] != nullptr) {
-        this->location = new RenderableText(entry["location"], 16, GREEN, true);
+        this->location = new RenderableText(entry["location"], 16, GREEN, FONTTYPE_MONO);
     }
 }
 

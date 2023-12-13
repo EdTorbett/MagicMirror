@@ -8,9 +8,9 @@
             <mapping deploy="/tmp/tmp.CGGJCn3GY5" local="$PROJECT_DIR$" />
           </mappings>
           <excludedPaths>
-            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-magic-mirror" />
-            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-magic-mirror" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-magic-mirror" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-magic-mirror" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-magic-mirror" />
           </excludedPaths>
         </serverdata>
       </paths>

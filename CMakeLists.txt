@@ -25,6 +25,8 @@ add_executable(MagicMirror main.cpp
         HomeAssistant.h
         CalendarEntry.cpp
         CalendarEntry.h
+        WeatherEntry.cpp
+        WeatherEntry.h
 )
 
 target_link_libraries(MagicMirror PRIVATE

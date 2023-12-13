@@ -11,8 +11,8 @@
 #include <vector>
 #include <connection.h>
 #include <memory>
-#include <restclient.h>
 #include "CalendarEntry.h"
+#include "WeatherEntry.h"
 
 class HomeAssistant {
 public:
@@ -24,6 +24,9 @@ private:
     std::string m_url;
     std::string m_token;
     std::vector<std::shared_ptr<CalendarEntry>> m_calendar;
+    std::vector<std::shared_ptr<WeatherEntry>> m_forecast;
+    RenderableText *m_date;
+    RenderableText *m_clock;
     RestClient::Connection *m_connection;
 };
 
