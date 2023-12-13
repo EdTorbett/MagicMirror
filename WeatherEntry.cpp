@@ -4,6 +4,7 @@
 
 #include "WeatherEntry.h"
 #include <sstream>
+#include <iostream>
 
 WeatherEntry::WeatherEntry(const std::string& line_item) :
 symbol(nullptr),
@@ -19,11 +20,12 @@ precipitation(nullptr) {
         symbol = new RenderableText("\uF409", 40, WHITE, FONTTYPE_SYMBOL);
     } else if (item == "partlycloudy") {
         symbol = new RenderableText("\uF475", 40, WHITE, FONTTYPE_SYMBOL);
-    } else if (item == "clear") {
+    } else if (item == "sunny") {
         symbol = new RenderableText("\uF4B6", 40, WHITE, FONTTYPE_SYMBOL);
     } else if (item == "rainy") {
         symbol = new RenderableText("\uF494", 40, WHITE, FONTTYPE_SYMBOL);
     } else {
+        std::cout << "Unknown weather: " << item << std::endl;
         symbol = new RenderableText("\uF4BC", 40, WHITE, FONTTYPE_SYMBOL);
     }
 
