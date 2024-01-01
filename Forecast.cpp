@@ -23,6 +23,9 @@ void split_weather(std::vector<std::shared_ptr<WeatherEntry>> &result, const std
 
 void Forecast::fetch(RestClient::Connection *connection) {
     RestClient::Response r = connection->get("/api/states/input_text.hourly_weather_1");
+    if (r.code != 200) {
+        return;
+    }
     m_entries.clear();
     nlohmann::json json_result = nlohmann::json::parse(r.body);
     split_weather(m_entries, json_result["state"]);

@@ -25,6 +25,9 @@ void Calendar::fetch(RestClient::Connection *connection) {
     std::stringstream ss;
     ss << "/api/calendars/calendar.shared_calendar?start=" << cal_start << "&end=" << cal_end;
     RestClient::Response r = connection->get(ss.str());
+    if (r.code != 200) {
+        return;
+    }
     nlohmann::json json_result = nlohmann::json::parse(r.body);
 
     this->m_entries.clear();

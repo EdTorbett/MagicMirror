@@ -88,16 +88,18 @@ void HomeAssistant::update(CEC::ICECAdapter* cec_adapter) {
 
     if (now - m_last_user_fetch >= 5) {
         RestClient::Response r = m_connection->get("/api/states/input_select.mirror_user");
-        nlohmann::json json_result = nlohmann::json::parse(r.body);
-        if (m_user != json_result["state"]) {
-            m_user = json_result["state"];
-            std::cout << "User changed: " << m_user << std::endl;
-            if (m_user == "Nobody") {
-                // Turn off mirror
-                cec_adapter->StandbyDevices();
-            } else {
-                // Turn on mirror
-                cec_adapter->PowerOnDevices();
+        if (r.code == 200) {
+            nlohmann::json json_result = nlohmann::json::parse(r.body);
+            if (m_user != json_result["state"]) {
+                m_user = json_result["state"];
+                std::cout << "User changed: " << m_user << std::endl;
+                if (m_user == "Nobody") {
+                    // Turn off mirror
+                    cec_adapter->StandbyDevices();
+                } else {
+                    // Turn on mirror
+                    cec_adapter->PowerOnDevices();
+                }
             }
         }
 
@@ -107,6 +109,7 @@ void HomeAssistant::update(CEC::ICECAdapter* cec_adapter) {
     if (now - m_last_full_fetch >= 300) {
         m_calendar.fetch(m_connection);
         m_forecast.fetch(m_connection);
+        m_last_full_fetch = now;
     }
 }
 
