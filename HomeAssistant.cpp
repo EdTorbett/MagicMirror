@@ -8,6 +8,7 @@
 #include "HomeAssistant.h"
 
 #include <iomanip>
+#include <iostream>
 #include <nlohmann/json.hpp>
 #include <restclient.h>
 
@@ -39,6 +40,8 @@ const std::string MONTHS[] = {
 };
 
 HomeAssistant::HomeAssistant() :
+    m_last_full_fetch(0),
+    m_last_user_fetch(0),
     m_date(nullptr),
     m_clock(nullptr),
     m_connection(nullptr)
@@ -69,9 +72,32 @@ HomeAssistant::HomeAssistant() :
     m_clock = new RenderableText("00:00", 80, WHITE, FONTTYPE_MONO, ALIGN_RIGHT);
 }
 
-void HomeAssistant::fetch() {
-    m_calendar.fetch(m_connection);
-    m_forecast.fetch(m_connection);
+void HomeAssistant::update(CEC::ICECAdapter* cec_adapter) {
+    time_t now;
+    time(&now);
+
+    if (now - m_last_user_fetch >= 5) {
+        RestClient::Response r = m_connection->get("/api/states/input_select.mirror_user");
+        nlohmann::json json_result = nlohmann::json::parse(r.body);
+        if (m_user != json_result["state"]) {
+            m_user = json_result["state"];
+            std::cout << "User changed: " << m_user << std::endl;
+            if (m_user == "Nobody") {
+                // Turn off mirror
+                cec_adapter->StandbyDevices();
+            } else {
+                // Turn on mirror
+                cec_adapter->PowerOnDevices();
+            }
+        }
+
+        m_last_user_fetch = now;
+    }
+
+    if (now - m_last_full_fetch >= 300) {
+        m_calendar.fetch(m_connection);
+        m_forecast.fetch(m_connection);
+    }
 }
 
 void HomeAssistant::render(SDL_Renderer *renderer) {

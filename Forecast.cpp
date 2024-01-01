@@ -55,10 +55,6 @@ void Forecast::set_pos(int x, int y) {
 }
 
 void Forecast::render(SDL_Renderer* renderer) {
-    // SDL_SetRenderDrawColor(renderer, 0x00, 0x20, 0x60, 0xFF);
-    // SDL_Rect r = {this->x(), this->y(), this->w(), 40};
-    // SDL_RenderFillRect(renderer, &r);
-
     for (const auto& entry : this->m_entries) {
         entry->render(renderer);
     }
