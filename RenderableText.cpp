@@ -7,9 +7,9 @@
 #include <iostream>
 
 std::string font_types[] = {
-    std::string("../fonts/Poppins-Regular.ttf"),
-    std::string("../fonts/RobotoMono-Regular.ttf"),
-    std::string("../fonts/ionicons.ttf")
+    std::string("fonts/Poppins-Regular.ttf"),
+    std::string("fonts/RobotoMono-Regular.ttf"),
+    std::string("fonts/ionicons.ttf")
 };
 
 void text_init() {

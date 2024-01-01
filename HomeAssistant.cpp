@@ -11,6 +11,8 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <restclient.h>
+#include <unistd.h>
+#include <pwd.h>
 
 #include "WeatherEntry.h"
 
@@ -51,7 +53,15 @@ HomeAssistant::HomeAssistant() :
     m_calendar.set_pos(60, 140);
     m_forecast.set_pos(60, 20);
 
-    std::ifstream token_file("../token");
+    std::string homedir;
+
+    if (getenv("HOME") == nullptr) {
+        homedir = getpwuid(getuid())->pw_dir;
+    } else {
+        homedir = getenv("HOME");
+    }
+
+    std::ifstream token_file(homedir + "/.token");
     std::string tmp;
 
     if (token_file.is_open())

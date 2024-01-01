@@ -5,12 +5,14 @@
       <paths name="Magic Mirror (aceb9880-ee19-4da1-b18e-6d89add5e382)">
         <serverdata>
           <mappings>
-            <mapping deploy="/tmp/tmp.CGGJCn3GY5" local="$PROJECT_DIR$" />
+            <mapping deploy="/home/magicmirror/ui" local="$PROJECT_DIR$" />
           </mappings>
           <excludedPaths>
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-magic-mirror" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-magic-mirror" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-magic-mirror" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug" />
           </excludedPaths>
         </serverdata>
       </paths>
