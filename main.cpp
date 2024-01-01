@@ -37,7 +37,11 @@ int main()
 
     SDL_Event event;
 
+    time_t now;
+    time ( &now );
+
     homeAssistant.fetch();
+    time_t last_fetch_time = now;
 
     int running = 1;
     while(running) {
@@ -46,6 +50,14 @@ int main()
                 running = 0;
             }
         }
+
+        time ( &now );
+
+        if (now - last_fetch_time >= 60) {
+            homeAssistant.fetch();
+            last_fetch_time = now;
+        }
+
         SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
         SDL_RenderClear(renderer);
 
