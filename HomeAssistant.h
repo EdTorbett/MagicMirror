@@ -31,6 +31,7 @@ private:
     RenderableText *m_date;
     RenderableText *m_clock;
     RestClient::Connection *m_connection;
+    bool m_connected;
 };
 
 

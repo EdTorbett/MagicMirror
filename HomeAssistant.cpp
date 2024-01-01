@@ -46,7 +46,8 @@ HomeAssistant::HomeAssistant() :
     m_last_user_fetch(0),
     m_date(nullptr),
     m_clock(nullptr),
-    m_connection(nullptr)
+    m_connection(nullptr),
+    m_connected(false)
 {
     RestClient::init();
 
@@ -71,13 +72,6 @@ HomeAssistant::HomeAssistant() :
         token_file.close();
     }
 
-    m_connection = new RestClient::Connection(m_url);
-    RestClient::HeaderFields headers;
-    headers["Content-Type"] = "application/json";
-    headers["Authorization"] = m_token;
-    m_connection->SetHeaders(headers);
-    m_connection->SetTimeout(10);
-
     m_date = new RenderableText("Date goes here", 80, WHITE, FONTTYPE_REGULAR, ALIGN_RIGHT);
     m_clock = new RenderableText("00:00", 80, WHITE, FONTTYPE_MONO, ALIGN_RIGHT);
 }
@@ -87,6 +81,15 @@ void HomeAssistant::update(CEC::ICECAdapter* cec_adapter) {
     time(&now);
 
     if (now - m_last_user_fetch >= 5) {
+        if (m_connection == nullptr) {
+            m_connection = new RestClient::Connection(m_url);
+            RestClient::HeaderFields headers;
+            headers["Content-Type"] = "application/json";
+            headers["Authorization"] = m_token;
+            m_connection->SetHeaders(headers);
+            m_connection->SetTimeout(10);
+        }
+
         RestClient::Response r = m_connection->get("/api/states/input_select.mirror_user");
         if (r.code == 200) {
             nlohmann::json json_result = nlohmann::json::parse(r.body);
@@ -101,12 +104,14 @@ void HomeAssistant::update(CEC::ICECAdapter* cec_adapter) {
                     cec_adapter->PowerOnDevices();
                 }
             }
+            m_connected = true;
+        } else {
+            m_connected = false;
         }
-
         m_last_user_fetch = now;
     }
 
-    if (now - m_last_full_fetch >= 300) {
+    if (m_connected && now - m_last_full_fetch >= 300) {
         m_calendar.fetch(m_connection);
         m_forecast.fetch(m_connection);
         m_last_full_fetch = now;
