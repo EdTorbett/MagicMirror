@@ -35,7 +35,7 @@ const std::string END_KEY = "end";
 const std::string DATE_KEY = "date";
 const std::string DATETIME_KEY = "dateTime";
 
-CalendarEntry::CalendarEntry(const nlohmann::json &entry, const std::chrono::system_clock::time_point &now) :
+CalendarEntry::CalendarEntry(const nlohmann::json &entry, const std::chrono::system_clock::time_point &today) :
 date(nullptr),
 description(nullptr),
 time(nullptr),
@@ -65,19 +65,23 @@ daysRemaining(nullptr) {
         this->date = new RenderableText(oss.str(), 16, YELLOW, FONTTYPE_MONO);
 
         auto event_date = std::chrono::system_clock::from_time_t(event_start_time_t);
-        auto days_till_event = floor<std::chrono::hours>(event_date - now).count() / 24;
+        auto days_till_event = floor<std::chrono::hours>(event_date - today).count() / 24;
 
         oss.str("");
         oss.clear();
-        if (days_till_event < 0) {
-            oss << -days_till_event << " days ago";
-        } else if (days_till_event == 0) {
+        if (days_till_event == 0) {
             oss << "Today";
+        } else if (days_till_event == 1) {
+            oss << "Tomorrow";
+        } else if (days_till_event == -1) {
+            oss << "Started yesterday";
+        } else if (days_till_event < 0) {
+            oss << "Started " << -days_till_event << " days ago";
         } else {
             oss << days_till_event << " days time";
         }
 
-        this->daysRemaining = new RenderableText(oss.str(), 16, YELLOW, FONTTYPE_MONO);
+        this->daysRemaining = new RenderableText(oss.str(), 16, YELLOW, FONTTYPE_MONO, ALIGN_RIGHT);
 
         if (!startTime.empty()) {
             this->time = new RenderableText(startTime, 16, YELLOW, FONTTYPE_MONO);
@@ -105,7 +109,7 @@ daysRemaining(nullptr) {
         this->description = new RenderableText(entry["summary"], 22, WHITE, FONTTYPE_REGULAR);
     }
     if (entry.contains("location") and entry["location"] != nullptr) {
-        this->location = new RenderableText(entry["location"], 16, GREEN, FONTTYPE_MONO);
+        this->location = new RenderableText(entry["location"], 16, GREEN, FONTTYPE_MONO, ALIGN_RIGHT);
     }
 }
 
@@ -158,7 +162,7 @@ void CalendarEntry::set_pos(int x, int y) {
         this->date->set_pos(x + 10, y + 2);
     }
     if (this->daysRemaining != nullptr) {
-        this->daysRemaining->set_pos(x + (this->w() - 5 - this->daysRemaining->w()), y + 2);
+        this->daysRemaining->set_pos(x + (this->w() - 5), y + 2);
     }
     if (this->time != nullptr) {
         this->time->set_pos(x + 10, y + 53);
@@ -167,7 +171,7 @@ void CalendarEntry::set_pos(int x, int y) {
         this->description->set_pos(x + 10, y + 22);
     }
     if (this->location != nullptr) {
-        this->location->set_pos(x + (this->w() - 5 - this->location->w()), y + 53);
+        this->location->set_pos(x + (this->w() - 5), y + 53);
     }
 
 }

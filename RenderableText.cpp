@@ -19,18 +19,18 @@ void text_init() {
     }
 }
 
-RenderableText::RenderableText(const std::string& text, int font_size, const SDL_Color &color, FontType type) :
+RenderableText::RenderableText(const std::string& text, int font_size, const SDL_Color &color, FontType type, TextAlignment alignment) :
 m_font(nullptr),
 m_color(color),
 m_message(nullptr),
 m_text(nullptr),
+m_alignment(alignment),
 m_rect({0, 0, 0, 0}) {
     m_font = TTF_OpenFont(font_types[type].c_str(), font_size);
     TTF_SetFontStyle(m_font, TTF_STYLE_NORMAL);
     TTF_SetFontOutline(m_font, 0);
     TTF_SetFontKerning(m_font, 1);
     TTF_SetFontHinting(m_font, TTF_HINTING_NORMAL);
-
     m_text = TTF_RenderUTF8_Blended(m_font, text.c_str(), m_color);
     m_rect.w = m_text->w;
     m_rect.h = m_text->h;
@@ -61,8 +61,15 @@ void RenderableText::set_text(const std::string &text) {
         m_text = nullptr;
     }
     m_text = TTF_RenderUTF8_Blended(m_font, text.c_str(), m_color);
+
+    const int orig_w = m_rect.w;
     m_rect.w = m_text->w;
     m_rect.h = m_text->h;
+    if (m_alignment == 1) {
+        m_rect.x += (orig_w >> 1) - (m_text->w >> 1);
+    } else if (m_alignment == 2) {
+        m_rect.x += orig_w - m_text->w;
+    }
 }
 
 void RenderableText::render(SDL_Renderer *renderer) {
@@ -74,5 +81,11 @@ void RenderableText::render(SDL_Renderer *renderer) {
 
 void RenderableText::set_pos(const int x, const int y) {
     m_rect.x = x;
+    if (m_alignment == 1) {
+        m_rect.x -= m_text->w >> 1;
+    } else if (m_alignment == 2) {
+        m_rect.x -= m_text->w;
+    }
+
     m_rect.y = y;
 }

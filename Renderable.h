@@ -16,6 +16,7 @@ const SDL_Color RED    = {0xFF, 0x00, 0x00, 0 };
 
 class Renderable {
 public:
+    virtual ~Renderable() = default;
     virtual void render(SDL_Renderer *renderer) = 0;
     [[nodiscard]] virtual int x() const = 0;
     [[nodiscard]] virtual int y() const = 0;

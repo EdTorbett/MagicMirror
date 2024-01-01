@@ -27,6 +27,10 @@ add_executable(MagicMirror main.cpp
         CalendarEntry.h
         WeatherEntry.cpp
         WeatherEntry.h
+        Calendar.cpp
+        Calendar.h
+        Forecast.cpp
+        Forecast.h
 )
 
 target_link_libraries(MagicMirror PRIVATE

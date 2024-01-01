@@ -14,26 +14,28 @@ precipitation(nullptr) {
     std::stringstream ss(line_item);
     std::string item;
     getline (ss, item, ',');
-    time = new RenderableText(item, 16, WHITE, FONTTYPE_MONO);
+    time = new RenderableText(item, 24, WHITE, FONTTYPE_MONO, ALIGN_CENTER);
     getline (ss, item, ',');
+    std::string symbol_text = "\uF4BC";
+    int symbol_size = 60;
     if (item == "cloudy") {
-        symbol = new RenderableText("\uF409", 40, WHITE, FONTTYPE_SYMBOL);
+        symbol_text = "\uF409";
     } else if (item == "partlycloudy") {
-        symbol = new RenderableText("\uF475", 40, WHITE, FONTTYPE_SYMBOL);
+        symbol_text = "\uF475";
     } else if (item == "sunny") {
-        symbol = new RenderableText("\uF4B6", 40, WHITE, FONTTYPE_SYMBOL);
+        symbol_text = "\uF4B6";
     } else if (item == "rainy") {
-        symbol = new RenderableText("\uF494", 40, WHITE, FONTTYPE_SYMBOL);
+        symbol_text = "\uF494";
+        symbol_size = 80;
     } else {
         std::cout << "Unknown weather: " << item << std::endl;
-        symbol = new RenderableText("\uF4BC", 40, WHITE, FONTTYPE_SYMBOL);
     }
-
+    symbol = new RenderableText(symbol_text, symbol_size, WHITE, FONTTYPE_SYMBOL, ALIGN_RIGHT);
     getline (ss, item, ',');
-    temperature = new RenderableText(item + "\u00B0C", 16, WHITE, FONTTYPE_MONO);
+    temperature = new RenderableText(item + "\u00B0C", 20, WHITE, FONTTYPE_MONO, ALIGN_LEFT);
     getline (ss, item, ',');
     if (item != "0.0") {
-        precipitation = new RenderableText(item + "mm", 16, BLUE, FONTTYPE_MONO);
+        precipitation = new RenderableText(item + "mm", 20, BLUE, FONTTYPE_MONO, ALIGN_LEFT);
     }
 }
 
@@ -45,10 +47,6 @@ WeatherEntry::~WeatherEntry() {
 }
 
 void WeatherEntry::render(SDL_Renderer *renderer) {
-    SDL_SetRenderDrawColor(renderer, 0x00, 0x20, 0x60, 0xFF);
-    SDL_Rect r = {this->x(), this->y(), 150, 40};
-    SDL_RenderFillRect(renderer, &r);
-
     if (this->symbol != nullptr) {
         this->symbol->render(renderer);
     }
@@ -64,11 +62,11 @@ void WeatherEntry::render(SDL_Renderer *renderer) {
 }
 
 int WeatherEntry::x() const {
-    return this->symbol->x();
+    return m_x;
 }
 
 int WeatherEntry::y() const {
-    return this->symbol->y();
+    return m_y;
 }
 
 int WeatherEntry::w() const {
@@ -80,16 +78,19 @@ int WeatherEntry::h() const {
 }
 
 void WeatherEntry::set_pos(int x, int y) {
-    if (this->symbol != nullptr) {
-        this->symbol->set_pos(x, y);
-    }
+    m_x = x;
+    m_y = y;
+
     if (this->time != nullptr) {
-        this->time->set_pos(x, y + 40);
+        this->time->set_pos(x + 75, y);
+    }
+    if (this->symbol != nullptr) {
+        this->symbol->set_pos(x + 70, y + 60 - this->symbol->h() / 2);
     }
     if (this->temperature != nullptr) {
-        this->temperature->set_pos(x, y + 56);
+        this->temperature->set_pos(x + 80, y + 35);
     }
     if (this->precipitation != nullptr) {
-        this->precipitation->set_pos(x, y + 72);
+        this->precipitation->set_pos(x + 80, y + 60);
     }
 }

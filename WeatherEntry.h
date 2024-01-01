@@ -14,7 +14,7 @@
 class WeatherEntry : Renderable {
 public:
     explicit WeatherEntry(const std::string &line_item);
-    ~WeatherEntry();
+    ~WeatherEntry() override;
     void render(SDL_Renderer *renderer) override;
     int x() const override;
     int y() const override;
@@ -26,6 +26,8 @@ private:
     RenderableText *time;
     RenderableText *temperature;
     RenderableText *precipitation;
+    int m_x = 0;
+    int m_y = 0;
 };
 
 

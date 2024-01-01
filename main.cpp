@@ -37,8 +37,7 @@ int main()
 
     SDL_Event event;
 
-    homeAssistant.fetchCalendar();
-    homeAssistant.fetchForecast();
+    homeAssistant.fetch();
 
     int running = 1;
     while(running) {

@@ -13,13 +13,13 @@
 
 class CalendarEntry : Renderable {
 public:
-    CalendarEntry(const nlohmann::json &entry, const std::chrono::system_clock::time_point &now);
-    ~CalendarEntry();
+    CalendarEntry(const nlohmann::json &entry, const std::chrono::system_clock::time_point &today);
+    ~CalendarEntry() override;
     void render(SDL_Renderer *renderer) override;
-    int x() const override;
-    int y() const override;
-    int w() const override;
-    int h() const override;
+    [[nodiscard]] int x() const override;
+    [[nodiscard]] int y() const override;
+    [[nodiscard]] int w() const override;
+    [[nodiscard]] int h() const override;
     void set_pos(int x, int y) override;
 private:
     RenderableText *date;

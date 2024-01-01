@@ -6,25 +6,24 @@
 #define MAGICMIRROR_HOMEASSISTANT_H
 
 
-#include "Renderable.h"
 #include <string>
-#include <vector>
 #include <connection.h>
 #include <memory>
-#include "CalendarEntry.h"
+
+#include "Calendar.h"
+#include "Forecast.h"
 #include "WeatherEntry.h"
 
 class HomeAssistant {
 public:
     HomeAssistant();
-    void fetchCalendar();
-    void fetchForecast();
+    void fetch();
     void render(SDL_Renderer *renderer);
 private:
     std::string m_url;
     std::string m_token;
-    std::vector<std::shared_ptr<CalendarEntry>> m_calendar;
-    std::vector<std::shared_ptr<WeatherEntry>> m_forecast;
+    Calendar m_calendar;
+    Forecast m_forecast;
     RenderableText *m_date;
     RenderableText *m_clock;
     RestClient::Connection *m_connection;

@@ -18,11 +18,16 @@ typedef enum FontType {
     FONTTYPE_SYMBOL
 } FontType;
 
+typedef enum TextAlignment {
+    ALIGN_LEFT = 0,
+    ALIGN_CENTER,
+    ALIGN_RIGHT
+} TextAlignment;
 
 class RenderableText : Renderable {
 public:
-    RenderableText(const std::string& text, int font_siz, const SDL_Color &color, FontType type);
-    ~RenderableText();
+    RenderableText(const std::string& text, int font_siz, const SDL_Color &color, FontType type, TextAlignment alignment = ALIGN_LEFT);
+    ~RenderableText() override;
     void render(SDL_Renderer *renderer) override;
     [[nodiscard]] int x() const override { return m_rect.x; };
     [[nodiscard]] int y() const override { return m_rect.y; };
@@ -36,6 +41,7 @@ private:
     SDL_Texture *m_message;
     SDL_Surface *m_text;
     SDL_Rect m_rect;
+    TextAlignment m_alignment;
 };
 
 

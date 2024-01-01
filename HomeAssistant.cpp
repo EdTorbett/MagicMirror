@@ -40,13 +40,14 @@ const std::string MONTHS[] = {
 };
 
 HomeAssistant::HomeAssistant() :
-    m_url(),
-    m_token(),
     m_date(nullptr),
     m_clock(nullptr),
     m_connection(nullptr)
 {
     RestClient::init();
+
+    m_calendar.set_pos(60, 140);
+    m_forecast.set_pos(60, 20);
 
     std::ifstream token_file("../token");
     std::string tmp;
@@ -65,76 +66,18 @@ HomeAssistant::HomeAssistant() :
     m_connection->SetHeaders(headers);
     m_connection->SetTimeout(10);
 
-    m_date = new RenderableText("Date goes here", 80, WHITE, FONTTYPE_REGULAR);
-    m_clock = new RenderableText("00:00:00", 80, WHITE, FONTTYPE_MONO);
+    m_date = new RenderableText("Date goes here", 80, WHITE, FONTTYPE_REGULAR, ALIGN_RIGHT);
+    m_clock = new RenderableText("00:00", 80, WHITE, FONTTYPE_MONO, ALIGN_RIGHT);
 }
 
-void HomeAssistant::fetchCalendar() {
-    auto const time = std::chrono::system_clock::now();
-    std::time_t now = std::chrono::system_clock::to_time_t(time);
-    std::string cal_start(30, '\0');
-    cal_start.resize(std::strftime(&cal_start[0], cal_start.size(), "%Y-%m-%dT00:00:00.000Z", std::localtime(&now)));
-    now += (86400 * 30);
-    std::string cal_end(30, '\0');
-    cal_end.resize(std::strftime(&cal_end[0], cal_end.size(), "%Y-%m-%dT00:00:00.000Z", std::localtime(&now)));
-    std::stringstream ss;
-    ss << "/api/calendars/calendar.shared_calendar?start=" << cal_start << "&end=" << cal_end;
-    RestClient::Response r = m_connection->get(ss.str());
-    nlohmann::json json_result = nlohmann::json::parse(r.body);
-
-    this->m_calendar.clear();
-
-    int y_offset = 100;
-    int count = 0;
-
-    for (const auto& item : json_result) {
-        auto *entry = new CalendarEntry(item, time);
-        entry->set_pos(60, y_offset);
-        y_offset += entry->h();
-        this->m_calendar.emplace_back(entry);
-        if (++count == 10) {
-            break;
-        }
-    }
-}
-
-void split_weather (std::vector<std::shared_ptr<WeatherEntry>> &result, const std::string &s) {
-    std::stringstream ss(s);
-    std::string item;
-
-    int x_offset = 60 + static_cast<int>(150 * result.size());
-
-    while (getline (ss, item, ';')) {
-        auto *entry = new WeatherEntry(item);
-        entry->set_pos(x_offset, 20);
-        x_offset += entry->w();
-        result.emplace_back(entry);
-    }
-}
-
-void HomeAssistant::fetchForecast() {
-    RestClient::Response r = m_connection->get("/api/states/input_text.hourly_weather_1");
-    m_forecast.clear();
-    nlohmann::json json_result = nlohmann::json::parse(r.body);
-    split_weather(m_forecast, json_result["state"]);
-    r = m_connection->get("/api/states/input_text.hourly_weather_2");
-    json_result = nlohmann::json::parse(r.body);
-    split_weather(m_forecast, json_result["state"]);
-    r = m_connection->get("/api/states/input_text.hourly_weather_3");
-    json_result = nlohmann::json::parse(r.body);
-    split_weather(m_forecast, json_result["state"]);
-    r = m_connection->get("/api/states/input_text.hourly_weather_4");
-    json_result = nlohmann::json::parse(r.body);
-    split_weather(m_forecast, json_result["state"]);
+void HomeAssistant::fetch() {
+    m_calendar.fetch(m_connection);
+    m_forecast.fetch(m_connection);
 }
 
 void HomeAssistant::render(SDL_Renderer *renderer) {
-    for (auto& entry : this->m_calendar) {
-        entry->render(renderer);
-    }
-    for (auto& entry : this->m_forecast) {
-        entry->render(renderer);
-    }
+    this->m_calendar.render(renderer);
+    this->m_forecast.render(renderer);
 
     time_t rawtime;
     time ( &rawtime );
@@ -142,13 +85,13 @@ void HomeAssistant::render(SDL_Renderer *renderer) {
     std::ostringstream os;
     os << DAYS_OF_WEEK[timeinfo->tm_wday] << " " << std::setw(2) << timeinfo->tm_mday << " " << MONTHS[timeinfo->tm_mon];
     m_date->set_text(os.str());
-    m_date->set_pos(1920 - 60 - m_date->w(), 1080 - 20 - m_date->h());
+    m_date->set_pos(1920 - 60, 1080 - 20 - m_date->h());
     m_date->render(renderer);
 
     os.str("");
     os.clear();
-    os << std::put_time(timeinfo, "%H:%M:%S");
+    os << std::put_time(timeinfo, "%H:%M");
     m_clock->set_text(os.str());
-    m_clock->set_pos(1920 - 60 - m_clock->w(), 1080 + 10 - m_clock->h() - m_date->h());
+    m_clock->set_pos(1920 - 60, 1080 + 10 - m_clock->h() - m_date->h());
     m_clock->render(renderer);
 }
