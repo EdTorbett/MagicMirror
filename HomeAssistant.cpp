@@ -44,10 +44,13 @@ const std::string MONTHS[] = {
 HomeAssistant::HomeAssistant() :
     m_last_full_fetch(0),
     m_last_user_fetch(0),
+    m_last_presence_fetch(0),
     m_date(nullptr),
     m_clock(nullptr),
     m_connection(nullptr),
-    m_connected(false)
+    m_connected(false),
+    m_ed_presence(PRESENCE_OTHER),
+    m_cath_presence(PRESENCE_OTHER)
 {
     RestClient::init();
 
@@ -67,8 +70,14 @@ HomeAssistant::HomeAssistant() :
 
     if (token_file.is_open())
     {
-        getline(token_file,m_url);
-        getline(token_file,m_token);
+        getline(token_file, m_url);
+        getline(token_file, m_token);
+        getline(token_file, m_ed_entity);
+        getline(token_file, m_cath_entity);
+        getline(token_file, tmp);
+        m_ed_proximity.set_entity(tmp);
+        getline(token_file, tmp);
+        m_cath_proximity.set_entity(tmp);
         token_file.close();
     }
 
@@ -93,22 +102,53 @@ void HomeAssistant::update(CEC::ICECAdapter* cec_adapter) {
         RestClient::Response r = m_connection->get("/api/states/input_select.mirror_user");
         if (r.code == 200) {
             nlohmann::json json_result = nlohmann::json::parse(r.body);
-            if (m_user != json_result["state"]) {
-                m_user = json_result["state"];
-                std::cout << "User changed: " << m_user << std::endl;
-                if (m_user == "Nobody") {
+            std::string new_user = json_result["state"];
+            if (m_user != new_user) {
+                std::cout << "User changed: " << new_user << std::endl;
+                if (new_user == "Nobody") {
                     // Turn off mirror
-                    cec_adapter->StandbyDevices();
-                } else {
+                    std::cout << "Putting display into standby..." << std::endl;
+                    cec_adapter->StandbyDevices(CEC::CECDEVICE_TV);
+                } else if (m_user == "Nobody") {
                     // Turn on mirror
-                    cec_adapter->PowerOnDevices();
+                    std::cout << "Waking display..." << std::endl;
+                    cec_adapter->PowerOnDevices(CEC::CECDEVICE_TV);
                 }
+                m_user = new_user;
             }
             m_connected = true;
         } else {
             m_connected = false;
         }
         m_last_user_fetch = now;
+    }
+
+    if (m_connected && now - m_last_presence_fetch >= 30) {
+        m_ed_proximity.fetch(m_connection);
+        m_cath_proximity.fetch(m_connection);
+        RestClient::Response r = m_connection->get("/api/states/" + m_ed_entity);
+        if (r.code == 200) {
+            nlohmann::json json_result = nlohmann::json::parse(r.body);
+            Presence new_state = PRESENCE_OTHER;
+            if (json_result["state"] == "home") {
+                new_state = PRESENCE_HOME;
+            } else if (json_result["state"] == "work") {
+                new_state = PRESENCE_WORK;
+            }
+            m_ed_presence = new_state;
+        }
+        r = m_connection->get("/api/states/" + m_cath_entity);
+        if (r.code == 200) {
+            nlohmann::json json_result = nlohmann::json::parse(r.body);
+            Presence new_state = PRESENCE_OTHER;
+            if (json_result["state"] == "home") {
+                new_state = PRESENCE_HOME;
+            } else if (json_result["state"] == "work") {
+                new_state = PRESENCE_WORK;
+            }
+            m_cath_presence = new_state;
+        }
+        m_last_presence_fetch = now;
     }
 
     if (m_connected && now - m_last_full_fetch >= 300) {
@@ -119,7 +159,12 @@ void HomeAssistant::update(CEC::ICECAdapter* cec_adapter) {
 }
 
 void HomeAssistant::render(SDL_Renderer *renderer) {
-    this->m_calendar.render(renderer);
+    if (m_user == "Nobody") {
+        return;
+    }
+    if (m_user != "Unknown") {
+        this->m_calendar.render(renderer);
+    }
     this->m_forecast.render(renderer);
 
     time_t rawtime;

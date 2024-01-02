@@ -31,8 +31,9 @@ int main()
     cec_config.Clear();
     cec_config.clientVersion       = CEC::LIBCEC_VERSION_CURRENT;
     cec_config.bActivateSource     = 0;
-    cec_config.deviceTypes.Add(CEC::CEC_DEVICE_TYPE_TV);
+    cec_config.deviceTypes.Add(CEC::CEC_DEVICE_TYPE_RECORDING_DEVICE);
     CEC::ICECAdapter* cec_adapter = LibCecInitialise(&cec_config);
+    cec_adapter->InitVideoStandalone();
 
     std::array<CEC::cec_adapter_descriptor,10> devices{};
     int8_t devices_found = cec_adapter->DetectAdapters(devices.data(), devices.size(), nullptr, true /*quickscan*/);
@@ -42,6 +43,7 @@ int main()
         UnloadLibCec(cec_adapter);
         return 1;
     }
+    std::cout << "Opening the CEC device on port " << devices[0].strComName << std::endl;
 
     // Open a connection to the zeroth CEC device
     if( !cec_adapter->Open(devices[0].strComName) )
@@ -51,7 +53,7 @@ int main()
         return 1;
     }
 
-    cec_adapter->StandbyDevices();
+    cec_adapter->StandbyDevices(CEC::CECDEVICE_TV);
 
     SDL_Window *window;
     SDL_Renderer *renderer;
@@ -88,4 +90,7 @@ int main()
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
+
+    cec_adapter->Close();
+    UnloadLibCec(cec_adapter);
 }

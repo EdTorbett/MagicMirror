@@ -33,6 +33,10 @@ add_executable(MagicMirror main.cpp
         Calendar.h
         Forecast.cpp
         Forecast.h
+        EdProximity.cpp
+        EdProximity.h
+        CathProximity.cpp
+        CathProximity.h
 )
 
 target_link_libraries(MagicMirror PRIVATE
