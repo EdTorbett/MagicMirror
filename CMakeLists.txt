@@ -10,6 +10,7 @@ find_package(Freetype REQUIRED)
 find_package(nlohmann_json 3.2.0 REQUIRED)
 find_package(Restclient REQUIRED)
 find_package(CEC REQUIRED)
+find_package(dlib REQUIRED)
 
 include_directories(MagicMirror
         ${SDL2_INCLUDE_DIRS}
@@ -46,4 +47,5 @@ target_link_libraries(MagicMirror PRIVATE
         ${Restclient_LIBRARY}
         ${CEC_LIBRARY}
         nlohmann_json::nlohmann_json
+        dlib::dlib
 )
