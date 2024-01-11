@@ -14,8 +14,6 @@
 #include <unistd.h>
 #include <pwd.h>
 
-#include "WeatherEntry.h"
-
 const std::string DAYS_OF_WEEK[] = {
     "Sunday",
     "Monday",
@@ -45,17 +43,24 @@ HomeAssistant::HomeAssistant() :
     m_last_full_fetch(0),
     m_last_user_fetch(0),
     m_last_presence_fetch(0),
+    m_last_cec_command(0),
+    m_last_cec_command_type(-1),
     m_date(nullptr),
     m_clock(nullptr),
     m_connection(nullptr),
     m_connected(false),
     m_ed_presence(PRESENCE_OTHER),
-    m_cath_presence(PRESENCE_OTHER)
+    m_cath_presence(PRESENCE_OTHER),
+    m_ed_proximity("\uF369"),
+    m_cath_proximity("\uF36F")
 {
     RestClient::init();
 
     m_calendar.set_pos(60, 140);
     m_forecast.set_pos(60, 20);
+
+    m_ed_proximity.set_pos(960, 250);
+    m_cath_proximity.set_pos(960, 250);
 
     std::string homedir;
 
@@ -85,6 +90,59 @@ HomeAssistant::HomeAssistant() :
     m_clock = new RenderableText("00:00", 80, WHITE, FONTTYPE_MONO, ALIGN_RIGHT);
 }
 
+void HomeAssistant::turn_off_display(CEC::ICECAdapter* cec_adapter, time_t &now) {
+    if (!cec_adapter->PingAdapter()) {
+        return;
+    }
+    auto active_source = cec_adapter->GetActiveSource();
+    if (active_source == CEC::CECDEVICE_PLAYBACKDEVICE1) {
+        if (m_last_cec_command_type != 2 || (now - m_last_cec_command) >= 10) {
+            std::cout << "Sending CEC deactivate source command..." << std::endl;
+            cec_adapter->SetInactiveView();
+            m_last_cec_command = now;
+            m_last_cec_command_type = 2;
+        }
+        return;
+    }
+
+    auto power_status = cec_adapter->GetDevicePowerStatus(CEC::CECDEVICE_TV);
+    if (power_status == CEC::CEC_POWER_STATUS_ON) {
+        if (m_last_cec_command_type != 3 || (now - m_last_cec_command) >= 10) {
+            std::cout << "Sending CEC standby command..." << std::endl;
+            cec_adapter->StandbyDevices(CEC::CECDEVICE_TV);
+            m_last_cec_command = now;
+            m_last_cec_command_type = 3;
+        }
+        return;
+    }}
+
+void HomeAssistant::turn_on_display(CEC::ICECAdapter* cec_adapter, time_t &now) {
+    if (!cec_adapter->PingAdapter()) {
+        return;
+    }
+    auto power_status = cec_adapter->GetDevicePowerStatus(CEC::CECDEVICE_TV);
+    if (power_status == CEC::CEC_POWER_STATUS_STANDBY) {
+        if (m_last_cec_command_type != 0 || (now - m_last_cec_command) >= 10) {
+            std::cout << "Sending CEC power on command..." << std::endl;
+            cec_adapter->PowerOnDevices(CEC::CECDEVICE_TV);
+            m_last_cec_command = now;
+            m_last_cec_command_type = 0;
+        }
+        return;
+    }
+
+    auto active_source = cec_adapter->GetActiveSource();
+    if (active_source != CEC::CECDEVICE_PLAYBACKDEVICE1) {
+        if (m_last_cec_command_type != 1 || (now - m_last_cec_command) >= 10) {
+            std::cout << "Sending CEC activate source command..." << std::endl;
+            cec_adapter->SetActiveSource();
+            m_last_cec_command = now;
+            m_last_cec_command_type = 1;
+        }
+        return;
+    }
+}
+
 void HomeAssistant::update(CEC::ICECAdapter* cec_adapter) {
     time_t now;
     time(&now);
@@ -105,16 +163,15 @@ void HomeAssistant::update(CEC::ICECAdapter* cec_adapter) {
             std::string new_user = json_result["state"];
             if (m_user != new_user) {
                 std::cout << "User changed: " << new_user << std::endl;
-                if (new_user == "Nobody") {
-                    // Turn off mirror
-                    std::cout << "Putting display into standby..." << std::endl;
-                    cec_adapter->StandbyDevices(CEC::CECDEVICE_TV);
-                } else if (m_user == "Nobody") {
-                    // Turn on mirror
-                    std::cout << "Waking display..." << std::endl;
-                    cec_adapter->PowerOnDevices(CEC::CECDEVICE_TV);
-                }
                 m_user = new_user;
+
+                if (m_user != "Nobody") {
+                    m_ed_proximity.set_pos(1240, 270);
+                    m_cath_proximity.set_pos(1240, 270);
+                } else {
+                    m_ed_proximity.set_pos(960, 540);
+                    m_cath_proximity.set_pos(960, 540);
+                }
             }
             m_connected = true;
         } else {
@@ -156,16 +213,39 @@ void HomeAssistant::update(CEC::ICECAdapter* cec_adapter) {
         m_forecast.fetch(m_connection);
         m_last_full_fetch = now;
     }
+
+    bool screen_should_be_on = false;
+
+    if (m_connected && m_user != "Nobody") {
+        screen_should_be_on = true;
+    }
+    if (m_cath_presence == PRESENCE_HOME && m_ed_proximity.is_interesting()) {
+        screen_should_be_on = true;
+    }
+    if (m_ed_presence == PRESENCE_HOME && m_cath_proximity.is_interesting()) {
+        screen_should_be_on = true;
+    }
+
+    if (screen_should_be_on) {
+        turn_on_display(cec_adapter, now);
+    } else {
+        turn_off_display(cec_adapter, now);
+    }
 }
 
 void HomeAssistant::render(SDL_Renderer *renderer) {
-    if (m_user == "Nobody") {
+    if (!m_connected) {
         return;
     }
-    if (m_user != "Unknown") {
-        this->m_calendar.render(renderer);
+
+    if (m_user != "Nobody") {
+        if (m_user != "Unknown") {
+            this->m_calendar.render(renderer);
+        }
+        this->m_forecast.render(renderer);
     }
-    this->m_forecast.render(renderer);
+    this->m_ed_proximity.render(renderer);
+    this->m_cath_proximity.render(renderer);
 
     time_t rawtime;
     time ( &rawtime );

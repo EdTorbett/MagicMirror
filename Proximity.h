@@ -2,35 +2,46 @@
 // Created by Ed on 02/01/2024.
 //
 
-#ifndef CATHPROXIMITY_H
-#define CATHPROXIMITY_H
+#ifndef PROXIMITY_H
+#define PROXIMITY_H
+
 #include <connection.h>
 #include <string>
 
 #include "Renderable.h"
+#include "RenderableText.h"
 
 
-class CathProximity : Renderable {
+class Proximity : Renderable {
 public:
-    CathProximity();
-    ~CathProximity();
+    explicit Proximity(const std::string &symbol);
+    ~Proximity() override;
     void set_entity(const std::string& entity);
     void fetch(RestClient::Connection *connection);
     void render(SDL_Renderer* renderer) override;
     void set_pos(int x, int y) override;
+    [[nodiscard]] bool is_interesting() const;
     [[nodiscard]] int h() const override;
     [[nodiscard]] int w() const override;
     [[nodiscard]] int x() const override;
     [[nodiscard]] int y() const override;
 private:
     std::string m_entity;
+    bool m_travelling;
     int m_proximity;
     time_t m_start_time;
+    time_t m_poll_time;
     int m_start_proximity;
+    double m_speed;
     int m_x;
     int m_y;
+
+    RenderableText *m_startSymbol;
+    RenderableText *m_endSymbol;
+    RenderableText *m_travellerSymbol;
+    RenderableText *m_eta;
 };
 
 
 
-#endif //CATHPROXIMITY_H
+#endif //PROXIMITY_H

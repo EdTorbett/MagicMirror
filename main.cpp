@@ -24,6 +24,7 @@ int main()
 
     auto init_re = SDL_VideoInit(SDL_DRIVER);
     if (init_re != 0) {
+        std::cerr << "Unable to initialise the display!" << std::endl;
         exit(EXIT_FAILURE);
     }
 
@@ -31,7 +32,8 @@ int main()
     cec_config.Clear();
     cec_config.clientVersion       = CEC::LIBCEC_VERSION_CURRENT;
     cec_config.bActivateSource     = 0;
-    cec_config.deviceTypes.Add(CEC::CEC_DEVICE_TYPE_RECORDING_DEVICE);
+    cec_config.deviceTypes.Add(CEC::CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
+    strncpy(cec_config.strDeviceName, "Magic Mirror", LIBCEC_OSD_NAME_SIZE);
     CEC::ICECAdapter* cec_adapter = LibCecInitialise(&cec_config);
     cec_adapter->InitVideoStandalone();
 
@@ -39,7 +41,7 @@ int main()
     int8_t devices_found = cec_adapter->DetectAdapters(devices.data(), devices.size(), nullptr, true /*quickscan*/);
     if( devices_found <= 0)
     {
-        std::cerr << "Could not automatically determine the cec adapter devices\n";
+        std::cerr << "Could not automatically determine the cec adapter devices" << std::endl;
         UnloadLibCec(cec_adapter);
         return 1;
     }
@@ -52,8 +54,6 @@ int main()
         UnloadLibCec(cec_adapter);
         return 1;
     }
-
-    cec_adapter->StandbyDevices(CEC::CECDEVICE_TV);
 
     SDL_Window *window;
     SDL_Renderer *renderer;
