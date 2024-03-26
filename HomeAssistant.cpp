@@ -138,6 +138,7 @@ void HomeAssistant::turn_on_display(CEC::ICECAdapter* cec_adapter, time_t &now) 
             cec_adapter->SetActiveSource();
             m_last_cec_command = now;
             m_last_cec_command_type = 1;
+            std::cout << "CEC activate source command complete." << std::endl;
         }
         return;
     }

@@ -37,7 +37,7 @@ void Proximity::fetch(RestClient::Connection* connection) {
         m_travelling = attributes["dir_of_travel"] == "towards";
         m_poll_time = now;
 
-        if (!m_travelling) {
+        if (!m_travelling || !m_start_proximity) {
             m_start_proximity = m_proximity;
             m_start_time = now;
             m_speed = 0;
@@ -90,7 +90,7 @@ void Proximity::render(SDL_Renderer* renderer) {
     time(&now);
     std::ostringstream oss;
     if (m_proximity > 1000) {
-        oss << std::setprecision(2) << (m_proximity / 1000.0) << "km away, ";
+        oss << std::setprecision(2) << std::fixed << (m_proximity / 1000.0) << "km away, ";
     } else {
         oss << m_proximity << "m away, ";
     }
