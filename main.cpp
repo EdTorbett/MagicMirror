@@ -57,7 +57,7 @@ int main()
         homeAssistant.render(renderer);
 
         SDL_RenderPresent(renderer);
-        SDL_Delay(5);
+        SDL_Delay(40);
     }
 
     SDL_DestroyRenderer(renderer);
