@@ -25,7 +25,6 @@ private:
     RenderableText *date;
     RenderableText *time;
     RenderableText *description;
-    RenderableText *location;
     RenderableText *daysRemaining;
 };
 

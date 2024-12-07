@@ -32,30 +32,39 @@ void Calendar::fetch(RestClient::Connection *connection) {
 
     this->m_entries.clear();
 
-    const int x_offset = this->m_x;
-    int y_offset = this->m_y;
     int count = 0;
 
     for (const auto& item : json_result) {
         auto *entry = new CalendarEntry(item, time);
-        entry->set_pos(x_offset, y_offset);
-        y_offset += entry->h();
         this->m_entries.emplace_back(entry);
         if (++count == 10) {
             break;
         }
     }
+
+    update_entry_positions();
 }
 
 void Calendar::set_pos(int x, int y) {
     this->m_x = x;
     this->m_y = y;
-    const int x_offset = this->m_x;
+    update_entry_positions();
+}
+
+void Calendar::update_entry_positions() {
+    int x_offset = this->m_x + 50;
     int y_offset = this->m_y;
 
+    const unsigned int split = (this->m_entries.size() + 1) / 2;
+    unsigned int i = 0;
     for (const auto& entry : this->m_entries) {
         entry->set_pos(x_offset, y_offset);
         y_offset += entry->h();
+        i += 1;
+        if (i == split) {
+            x_offset += 540;
+            y_offset = this->m_y;
+        }
     }
 }
 

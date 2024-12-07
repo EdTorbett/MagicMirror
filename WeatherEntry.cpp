@@ -5,12 +5,14 @@
 #include "WeatherEntry.h"
 #include <sstream>
 #include <iostream>
+#include <string>
 
 WeatherEntry::WeatherEntry(const std::string& line_item) :
 symbol(nullptr),
 time(nullptr),
 temperature(nullptr),
-precipitation(nullptr) {
+precipitation(nullptr),
+wind(nullptr) {
     std::stringstream ss(line_item);
     std::string item;
     getline (ss, item, ',');
@@ -30,12 +32,17 @@ precipitation(nullptr) {
     } else {
         std::cout << "Unknown weather: " << item << std::endl;
     }
-    symbol = new RenderableText(symbol_text, symbol_size, WHITE, FONTTYPE_SYMBOL, ALIGN_RIGHT);
+    symbol = new RenderableText(symbol_text, symbol_size, WHITE, FONTTYPE_SYMBOL, ALIGN_CENTER);
     getline (ss, item, ',');
-    temperature = new RenderableText(item + "\u00B0C", 20, WHITE, FONTTYPE_MONO, ALIGN_LEFT);
+    temperature = new RenderableText(item + "\u00B0C", 20, WHITE, FONTTYPE_MONO, ALIGN_CENTER);
     getline (ss, item, ',');
     if (item != "0.0") {
-        precipitation = new RenderableText(item + "mm", 20, BLUE, FONTTYPE_MONO, ALIGN_LEFT);
+        precipitation = new RenderableText(item + "mm", 20, BLUE, FONTTYPE_MONO, ALIGN_CENTER);
+    }
+    getline (ss, item, ',');
+    int wind_speed = std::stoi(item);
+    if (wind_speed >= 15) {
+        wind = new RenderableText(std::to_string(wind_speed) + "mph", 20, AMBER, FONTTYPE_MONO, ALIGN_CENTER);
     }
 }
 
@@ -44,6 +51,7 @@ WeatherEntry::~WeatherEntry() {
     delete time;
     delete temperature;
     delete precipitation;
+    delete wind;
 }
 
 void WeatherEntry::render(SDL_Renderer *renderer) {
@@ -59,6 +67,9 @@ void WeatherEntry::render(SDL_Renderer *renderer) {
     if (this->precipitation != nullptr) {
         this->precipitation->render(renderer);
     }
+    if (this->wind != nullptr) {
+        this->wind->render(renderer);
+    }
 }
 
 int WeatherEntry::x() const {
@@ -70,11 +81,11 @@ int WeatherEntry::y() const {
 }
 
 int WeatherEntry::w() const {
-    return 150;
+    return 90;
 }
 
 int WeatherEntry::h() const {
-    return 88;
+    return 150;
 }
 
 void WeatherEntry::set_pos(int x, int y) {
@@ -82,15 +93,22 @@ void WeatherEntry::set_pos(int x, int y) {
     m_y = y;
 
     if (this->time != nullptr) {
-        this->time->set_pos(x + 75, y);
+        this->time->set_pos(x + 45, y);
+        y += this->time->h();
     }
     if (this->symbol != nullptr) {
-        this->symbol->set_pos(x + 70, y + 60 - this->symbol->h() / 2);
+        this->symbol->set_pos(x + 45, y);
+        y += this->symbol->h();
     }
     if (this->temperature != nullptr) {
-        this->temperature->set_pos(x + 80, y + 35);
+        this->temperature->set_pos(x + 45, y);
+        y += this->temperature->h();
     }
     if (this->precipitation != nullptr) {
-        this->precipitation->set_pos(x + 80, y + 60);
+        this->precipitation->set_pos(x + 45, y);
+        y += this->precipitation->h();
+    }
+    if (this->wind != nullptr) {
+        this->wind->set_pos(x + 45, y);
     }
 }

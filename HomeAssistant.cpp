@@ -13,6 +13,7 @@
 #include <restclient.h>
 #include <unistd.h>
 #include <pwd.h>
+#include <cstdlib>
 
 const std::string DAYS_OF_WEEK[] = {
     "Sunday",
@@ -43,12 +44,11 @@ HomeAssistant::HomeAssistant() :
     m_last_full_fetch(0),
     m_last_user_fetch(0),
     m_last_presence_fetch(0),
-    m_last_cec_command(0),
-    m_last_cec_command_type(-1),
     m_date(nullptr),
     m_clock(nullptr),
     m_connection(nullptr),
     m_connected(false),
+    m_display_is_on(false),
     m_ed_presence(PRESENCE_OTHER),
     m_cath_presence(PRESENCE_OTHER),
     m_ed_proximity("\uF369"),
@@ -56,11 +56,11 @@ HomeAssistant::HomeAssistant() :
 {
     RestClient::init();
 
-    m_calendar.set_pos(60, 140);
-    m_forecast.set_pos(60, 20);
+    m_calendar.set_pos(0, 200);
+    m_forecast.set_pos(0, 0);
 
-    m_ed_proximity.set_pos(960, 250);
-    m_cath_proximity.set_pos(960, 250);
+    m_ed_proximity.set_pos(540, 960);
+    m_cath_proximity.set_pos(540, 960);
 
     std::string homedir;
 
@@ -90,61 +90,21 @@ HomeAssistant::HomeAssistant() :
     m_clock = new RenderableText("00:00", 80, WHITE, FONTTYPE_MONO, ALIGN_RIGHT);
 }
 
-void HomeAssistant::turn_off_display(CEC::ICECAdapter* cec_adapter, time_t &now) {
-    if (!cec_adapter->PingAdapter()) {
-        return;
-    }
-    auto active_source = cec_adapter->GetActiveSource();
-    if (active_source == CEC::CECDEVICE_PLAYBACKDEVICE1) {
-        if (m_last_cec_command_type != 2 || (now - m_last_cec_command) >= 10) {
-            std::cout << "Sending CEC deactivate source command..." << std::endl;
-            cec_adapter->SetInactiveView();
-            m_last_cec_command = now;
-            m_last_cec_command_type = 2;
-        }
-        return;
-    }
+void HomeAssistant::turn_off_display() {
+    // if (m_display_is_on) {
+    //     system("ddcutil setvcp d6 5");
+    //     m_display_is_on = false;
+    // }
+}
 
-    auto power_status = cec_adapter->GetDevicePowerStatus(CEC::CECDEVICE_TV);
-    if (power_status == CEC::CEC_POWER_STATUS_ON) {
-        if (m_last_cec_command_type != 3 || (now - m_last_cec_command) >= 10) {
-            std::cout << "Sending CEC standby command..." << std::endl;
-            cec_adapter->StandbyDevices(CEC::CECDEVICE_TV);
-            m_last_cec_command = now;
-            m_last_cec_command_type = 3;
-        }
-        return;
-    }}
-
-void HomeAssistant::turn_on_display(CEC::ICECAdapter* cec_adapter, time_t &now) {
-    if (!cec_adapter->PingAdapter()) {
-        return;
-    }
-    auto power_status = cec_adapter->GetDevicePowerStatus(CEC::CECDEVICE_TV);
-    if (power_status == CEC::CEC_POWER_STATUS_STANDBY) {
-        if (m_last_cec_command_type != 0 || (now - m_last_cec_command) >= 10) {
-            std::cout << "Sending CEC power on command..." << std::endl;
-            cec_adapter->PowerOnDevices(CEC::CECDEVICE_TV);
-            m_last_cec_command = now;
-            m_last_cec_command_type = 0;
-        }
-        return;
-    }
-
-    auto active_source = cec_adapter->GetActiveSource();
-    if (active_source != CEC::CECDEVICE_PLAYBACKDEVICE1) {
-        if (m_last_cec_command_type != 1 || (now - m_last_cec_command) >= 10) {
-            std::cout << "Sending CEC activate source command..." << std::endl;
-            cec_adapter->SetActiveSource();
-            m_last_cec_command = now;
-            m_last_cec_command_type = 1;
-            std::cout << "CEC activate source command complete." << std::endl;
-        }
-        return;
+void HomeAssistant::turn_on_display() {
+    if (!m_display_is_on) {
+        system("ddcutil setvcp 10 0");
+        m_display_is_on = true;
     }
 }
 
-void HomeAssistant::update(CEC::ICECAdapter* cec_adapter) {
+void HomeAssistant::update() {
     time_t now;
     time(&now);
 
@@ -165,14 +125,6 @@ void HomeAssistant::update(CEC::ICECAdapter* cec_adapter) {
             if (m_user != new_user) {
                 std::cout << "User changed: " << new_user << std::endl;
                 m_user = new_user;
-
-                if (m_user != "Nobody") {
-                    m_ed_proximity.set_pos(1240, 270);
-                    m_cath_proximity.set_pos(1240, 270);
-                } else {
-                    m_ed_proximity.set_pos(960, 540);
-                    m_cath_proximity.set_pos(960, 540);
-                }
             }
             m_connected = true;
         } else {
@@ -228,9 +180,9 @@ void HomeAssistant::update(CEC::ICECAdapter* cec_adapter) {
     }
 
     if (screen_should_be_on) {
-        turn_on_display(cec_adapter, now);
+        turn_on_display();
     } else {
-        turn_off_display(cec_adapter, now);
+        turn_off_display();
     }
 }
 
@@ -254,13 +206,13 @@ void HomeAssistant::render(SDL_Renderer *renderer) {
     std::ostringstream os;
     os << DAYS_OF_WEEK[timeinfo->tm_wday] << " " << std::setw(2) << timeinfo->tm_mday << " " << MONTHS[timeinfo->tm_mon];
     m_date->set_text(os.str());
-    m_date->set_pos(1920 - 60, 1080 - 20 - m_date->h());
+    m_date->set_pos(1080, 1920 - m_date->h());
     m_date->render(renderer);
 
     os.str("");
     os.clear();
     os << std::put_time(timeinfo, "%H:%M");
     m_clock->set_text(os.str());
-    m_clock->set_pos(1920 - 60, 1080 + 10 - m_clock->h() - m_date->h());
+    m_clock->set_pos(1080, 1920 - m_clock->h() - m_date->h());
     m_clock->render(renderer);
 }

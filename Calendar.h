@@ -27,6 +27,7 @@ private:
     int m_x = 0;
     int m_y = 0;
     std::vector<std::shared_ptr<CalendarEntry>> m_entries;
+    void update_entry_positions();
 };
 
 

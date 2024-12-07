@@ -76,7 +76,11 @@ void RenderableText::render(SDL_Renderer *renderer) {
     if (m_message == nullptr) {
         m_message = SDL_CreateTextureFromSurface(renderer, m_text);
     }
-    SDL_RenderCopy(renderer, m_message, nullptr, &m_rect);
+
+    const SDL_Point texture_rotation = { m_rect.x, m_rect.y};
+    const SDL_Point rotationCenter = { 540 - texture_rotation.x, 540 - texture_rotation.y };
+
+    SDL_RenderCopyEx(renderer, m_message, nullptr, &m_rect, -90, &rotationCenter, SDL_FLIP_NONE);
 }
 
 void RenderableText::set_pos(const int x, const int y) {

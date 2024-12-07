@@ -61,6 +61,8 @@ void Forecast::render(SDL_Renderer* renderer) {
     for (const auto& entry : this->m_entries) {
         entry->render(renderer);
     }
+    SDL_SetRenderDrawColor(renderer, 0x80, 0x80, 0x80, 0xFF);
+    SDL_RenderDrawLine(renderer, this->y() + this->h(), 1080 - this->x(), this->y() + this->h(), 1080 - (this->x() + this->w()));
 }
 
 int Forecast::x() const {
@@ -72,9 +74,9 @@ int Forecast::y() const {
 }
 
 int Forecast::h() const {
-    return 88;
+    return 150;
 }
 
 int Forecast::w() const {
-    return 1800;
+    return 1080;
 }

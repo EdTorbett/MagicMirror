@@ -39,18 +39,17 @@ CalendarEntry::CalendarEntry(const nlohmann::json &entry, const std::chrono::sys
 date(nullptr),
 description(nullptr),
 time(nullptr),
-location(nullptr),
 daysRemaining(nullptr) {
     time_t event_start_time_t;
     tm event_time({0});
+    std::ostringstream timeStringStream("");
+    std::ostringstream dateStringStream("");
     if (entry.contains("start")) {
-        std::string startTime;
-        std::ostringstream oss;
         const nlohmann::json &start = entry[START_KEY];
         if (start.contains(DATETIME_KEY)) {
             std::istringstream ss(std::string(start[DATETIME_KEY]).substr(0, 10));
             ss >> std::get_time(&event_time, "%Y-%m-%d");
-            startTime = "Starts at " + std::string(start[DATETIME_KEY]).substr(11, 5);
+            timeStringStream << std::string(start[DATETIME_KEY]).substr(11, 5);
         } else if (start.contains(DATE_KEY)) {
             std::string d = start[DATE_KEY];
             std::istringstream ss(d);
@@ -59,33 +58,27 @@ daysRemaining(nullptr) {
         event_start_time_t = mktime(&event_time);
         event_time = *localtime(&event_start_time_t);
 
-        oss.str("");
-        oss.clear();
-        oss << DAYS_OF_WEEK[event_time.tm_wday] << " " << std::setw(2) << event_time.tm_mday << " " << MONTHS[event_time.tm_mon];
-        this->date = new RenderableText(oss.str(), 16, YELLOW, FONTTYPE_MONO);
+        dateStringStream.str("");
+        dateStringStream.clear();
+        dateStringStream << DAYS_OF_WEEK[event_time.tm_wday] << " " << std::setw(2) << event_time.tm_mday << " " << MONTHS[event_time.tm_mon];
 
         auto event_date = std::chrono::system_clock::from_time_t(event_start_time_t);
         auto days_till_event = floor<std::chrono::hours>(event_date - today).count() / 24;
 
-        oss.str("");
-        oss.clear();
+        std::ostringstream daysToEvent;
         if (days_till_event == 0) {
-            oss << "Today";
+            daysToEvent << "Today";
         } else if (days_till_event == 1) {
-            oss << "Tomorrow";
+            daysToEvent << "Tomorrow";
         } else if (days_till_event == -1) {
-            oss << "Started yesterday";
+            daysToEvent << "Started yesterday";
         } else if (days_till_event < 0) {
-            oss << "Started " << -days_till_event << " days ago";
+            daysToEvent << "Started " << -days_till_event << " days ago";
         } else {
-            oss << days_till_event << " days time";
+            daysToEvent << days_till_event << " days time";
         }
 
-        this->daysRemaining = new RenderableText(oss.str(), 16, YELLOW, FONTTYPE_MONO, ALIGN_RIGHT);
-
-        if (!startTime.empty()) {
-            this->time = new RenderableText(startTime, 16, YELLOW, FONTTYPE_MONO);
-        }
+        this->daysRemaining = new RenderableText(daysToEvent.str(), 16, YELLOW, FONTTYPE_MONO, ALIGN_RIGHT);
     }
 
     if (entry.contains(END_KEY) && entry[END_KEY].contains(DATE_KEY)) {
@@ -95,21 +88,25 @@ daysRemaining(nullptr) {
         time_t event_end_time_t = mktime(&event_time);
         std::ostringstream oss;
         if (event_end_time_t == event_start_time_t + 86400) {
-            oss << "All day";
-        } else {
+            timeStringStream.clear();
+            timeStringStream << "All day";
+        } else if (event_end_time_t > event_start_time_t) {
             event_end_time_t -= 1;
             event_time = *localtime(&event_end_time_t);
-            oss << "Until " << DAYS_OF_WEEK[event_time.tm_wday] << " " << std::setw(2) << event_time.tm_mday << " "
+            dateStringStream << " to " << DAYS_OF_WEEK[event_time.tm_wday] << " " << std::setw(2) << event_time.tm_mday << " "
                 << MONTHS[event_time.tm_mon];
         }
-        this->time = new RenderableText(oss.str(), 16, YELLOW, FONTTYPE_MONO);
+    }
+
+    if (!timeStringStream.str().empty()) {
+        this->time = new RenderableText(timeStringStream.str(), 16, YELLOW, FONTTYPE_MONO, ALIGN_RIGHT);
+    }
+    if (!dateStringStream.str().empty()) {
+        this->date = new RenderableText(dateStringStream.str(), 16, YELLOW, FONTTYPE_MONO, ALIGN_LEFT);
     }
 
     if (entry.contains("summary") and entry["summary"] != nullptr) {
         this->description = new RenderableText(entry["summary"], 22, WHITE, FONTTYPE_REGULAR);
-    }
-    if (entry.contains("location") and entry["location"] != nullptr) {
-        this->location = new RenderableText(entry["location"], 16, GREEN, FONTTYPE_MONO, ALIGN_RIGHT);
     }
 }
 
@@ -117,7 +114,6 @@ CalendarEntry::~CalendarEntry() {
     delete date;
     delete time;
     delete description;
-    delete location;
     delete daysRemaining;
 }
 
@@ -131,47 +127,40 @@ void CalendarEntry::render(SDL_Renderer *renderer) {
     if (this->description != nullptr) {
         this->description->render(renderer);
     }
-    if (this->location != nullptr) {
-        this->location->render(renderer);
-    }
     if (this->daysRemaining != nullptr) {
         this->daysRemaining->render(renderer);
     }
     SDL_SetRenderDrawColor(renderer, 0x80, 0x80, 0x80, 0xFF);
-    SDL_RenderDrawLine(renderer, this->x(), this->y() + this->h(), this->x() + this->w(), this->y() + this->h());
+    SDL_RenderDrawLine(renderer, this->y() + this->h(), 1080 - this->x(), this->y() + this->h(), 1080 - (this->x() + this->w()));
 }
 
 int CalendarEntry::x() const {
-    return this->date->x() - 10;
+    return this->date->x();
 }
 
 int CalendarEntry::y() const {
-    return this->date->y() - 4;
+    return this->date->y() - 2;
 }
 
 int CalendarEntry::w() const {
-    return 450;
+    return 440;
 }
 
 int CalendarEntry::h() const {
-    return 80;
+    return 60;
 }
 
 void CalendarEntry::set_pos(int x, int y) {
     if (this->date != nullptr) {
-        this->date->set_pos(x + 10, y + 2);
+        this->date->set_pos(x, y + 2);
     }
     if (this->daysRemaining != nullptr) {
         this->daysRemaining->set_pos(x + (this->w() - 5), y + 2);
     }
     if (this->time != nullptr) {
-        this->time->set_pos(x + 10, y + 53);
+        this->time->set_pos(x + (this->w() - 5), y + 38);
     }
     if (this->description != nullptr) {
-        this->description->set_pos(x + 10, y + 22);
+        this->description->set_pos(x, y + 22);
     }
-    if (this->location != nullptr) {
-        this->location->set_pos(x + (this->w() - 5), y + 53);
-    }
-
 }
