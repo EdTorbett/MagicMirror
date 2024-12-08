@@ -1,7 +1,6 @@
 #include <SDL.h>
 #include <iostream>
 #include <fstream>
-#include <array>
 
 #include "RenderableText.h"
 #include "HomeAssistant.h"
@@ -15,6 +14,15 @@ using std::endl;
 #else
 #define SDL_DRIVER "KMSDRM"
 #endif
+
+int updater(void *data) {
+    auto *homeAssistant = static_cast<HomeAssistant *>(data);
+    while (homeAssistant->running()) {
+        homeAssistant->update();
+        SDL_Delay(500);
+    }
+    return 0;
+}
 
 int main()
 {
@@ -41,21 +49,18 @@ int main()
 
     SDL_Event event;
 
-    int running = 1;
-    while(running) {
+    SDL_CreateThread(updater, "Updater", &homeAssistant);
+
+    while(homeAssistant.running()) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
-                running = 0;
+                homeAssistant.stop();
             }
         }
 
-        homeAssistant.update();
-
         SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
         SDL_RenderClear(renderer);
-
         homeAssistant.render(renderer);
-
         SDL_RenderPresent(renderer);
         SDL_Delay(40);
     }

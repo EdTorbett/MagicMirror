@@ -5,6 +5,7 @@
 #ifndef PROXIMITY_H
 #define PROXIMITY_H
 
+#include <chrono>
 #include <connection.h>
 #include <string>
 
@@ -29,8 +30,8 @@ private:
     std::string m_entity;
     bool m_travelling;
     int m_proximity;
-    time_t m_start_time;
-    time_t m_poll_time;
+    std::chrono::time_point<std::chrono::steady_clock> m_start_time;
+    std::chrono::time_point<std::chrono::steady_clock> m_poll_time;
     int m_start_proximity;
     double m_speed;
     int m_x;

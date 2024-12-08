@@ -10,7 +10,7 @@
 #include <nlohmann/json.hpp>
 
 
-Proximity::Proximity(const std::string &symbol): m_travelling(false), m_proximity(0), m_start_time(0), m_poll_time(0), m_start_proximity(0), m_x(0), m_y(0), m_speed(0) {
+Proximity::Proximity(const std::string &symbol): m_travelling(false), m_proximity(0), m_start_proximity(0), m_speed(0), m_x(0), m_y(0) {
     m_startSymbol = new RenderableText("\uF3A3", 120, WHITE, FONTTYPE_SYMBOL, ALIGN_LEFT);
     m_endSymbol = new RenderableText("\uF38F", 120, WHITE, FONTTYPE_SYMBOL, ALIGN_RIGHT);
     m_travellerSymbol = new RenderableText(symbol, 120, WHITE, FONTTYPE_SYMBOL, ALIGN_CENTER);
@@ -25,8 +25,7 @@ void Proximity::set_entity(const std::string& entity) {
 }
 
 void Proximity::fetch(RestClient::Connection* connection) {
-    time_t now;
-    time(&now);
+    const auto& now = std::chrono::steady_clock::now();
     auto r = connection->get("/api/states/" + m_entity);
     if (r.code == 200) {
         nlohmann::json json_result = nlohmann::json::parse(r.body);
@@ -42,9 +41,9 @@ void Proximity::fetch(RestClient::Connection* connection) {
             m_start_time = now;
             m_speed = 0;
         } else if (m_proximity < m_start_proximity && now > m_start_time){
-            const time_t time_since_start = now - m_start_time;
+            const double time_since_start = static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(now - m_start_time).count()) / 1000.0;
             const int distance_travelled = m_start_proximity - m_proximity;
-            m_speed = 1.0 * distance_travelled / time_since_start;
+            m_speed = distance_travelled / time_since_start;
         } else {
             m_speed = 0;
         }
@@ -86,8 +85,7 @@ void Proximity::render(SDL_Renderer* renderer) {
     if (!is_interesting()) {
         return;
     }
-    time_t now;
-    time(&now);
+    const auto &now = std::chrono::steady_clock::now();
     std::ostringstream oss;
     if (m_proximity > 1000) {
         oss << std::setprecision(2) << std::fixed << (m_proximity / 1000.0) << "km away, ";
@@ -97,11 +95,14 @@ void Proximity::render(SDL_Renderer* renderer) {
     const int traveller_position = 900 * (m_start_proximity - m_proximity) / m_start_proximity;
     if (m_speed > 0) {
         const auto time_since_poll = now - m_poll_time;
-        const auto expected_remaining_time = std::max(static_cast<time_t>(0), static_cast<time_t>(m_proximity / m_speed) - time_since_poll);
-        tm arrival_time({0});
-        arrival_time = *gmtime(&expected_remaining_time);
-        oss << std::put_time(&arrival_time, "ETA %H:%M:%S");
-        m_eta->set_text(oss.str());
+        const auto time_taken = std::chrono::seconds(static_cast<int>(m_proximity / m_speed));
+        const auto expected_remaining_time = time_taken - time_since_poll;
+        const auto &arrival_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() + expected_remaining_time);
+
+        std::string s(30, '\0');
+        std::strftime(&s[0], s.size(), "ETA %H:%M:%S", std::localtime(&arrival_time));
+
+        m_eta->set_text(s);
         m_travellerSymbol->set_pos(m_x + 150 + traveller_position, m_y);
     } else {
         // Unknown ETA

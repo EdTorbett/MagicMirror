@@ -41,9 +41,7 @@ const std::string MONTHS[] = {
 };
 
 HomeAssistant::HomeAssistant() :
-    m_last_full_fetch(0),
-    m_last_user_fetch(0),
-    m_last_presence_fetch(0),
+    m_welcome(nullptr),
     m_date(nullptr),
     m_clock(nullptr),
     m_connection(nullptr),
@@ -52,7 +50,8 @@ HomeAssistant::HomeAssistant() :
     m_ed_presence(PRESENCE_OTHER),
     m_cath_presence(PRESENCE_OTHER),
     m_ed_proximity("\uF369"),
-    m_cath_proximity("\uF36F")
+    m_cath_proximity("\uF36F"),
+    m_running(true)
 {
     RestClient::init();
 
@@ -88,6 +87,8 @@ HomeAssistant::HomeAssistant() :
 
     m_date = new RenderableText("Date goes here", 80, WHITE, FONTTYPE_REGULAR, ALIGN_RIGHT);
     m_clock = new RenderableText("00:00", 80, WHITE, FONTTYPE_MONO, ALIGN_RIGHT);
+    m_welcome = new RenderableText("", 80, BLACK, FONTTYPE_REGULAR, ALIGN_CENTER);
+    m_welcome->set_pos(540, 960);
 }
 
 void HomeAssistant::turn_off_display() {
@@ -105,10 +106,9 @@ void HomeAssistant::turn_on_display() {
 }
 
 void HomeAssistant::update() {
-    time_t now;
-    time(&now);
+    const auto& now = std::chrono::steady_clock::now();
 
-    if (now - m_last_user_fetch >= 5) {
+    if (now - m_last_user_fetch >= std::chrono::seconds(5)) {
         if (m_connection == nullptr) {
             m_connection = new RestClient::Connection(m_url);
             RestClient::HeaderFields headers;
@@ -125,6 +125,10 @@ void HomeAssistant::update() {
             if (m_user != new_user) {
                 std::cout << "User changed: " << new_user << std::endl;
                 m_user = new_user;
+                if (m_user != "Nobody" && m_user != "Unknown") {
+                    m_last_user_change_time = now;
+                    m_welcome->set_text("Welcome, " + m_user + "!");
+                }
             }
             m_connected = true;
         } else {
@@ -133,7 +137,7 @@ void HomeAssistant::update() {
         m_last_user_fetch = now;
     }
 
-    if (m_connected && now - m_last_presence_fetch >= 30) {
+    if (m_connected && now - m_last_presence_fetch >= std::chrono::seconds(30)) {
         m_ed_proximity.fetch(m_connection);
         m_cath_proximity.fetch(m_connection);
         RestClient::Response r = m_connection->get("/api/states/" + m_ed_entity);
@@ -161,7 +165,7 @@ void HomeAssistant::update() {
         m_last_presence_fetch = now;
     }
 
-    if (m_connected && now - m_last_full_fetch >= 300) {
+    if (m_connected && now - m_last_full_fetch >= std::chrono::seconds(300)) {
         m_calendar.fetch(m_connection);
         m_forecast.fetch(m_connection);
         m_last_full_fetch = now;
@@ -189,6 +193,14 @@ void HomeAssistant::update() {
 void HomeAssistant::render(SDL_Renderer *renderer) {
     if (!m_connected) {
         return;
+    }
+    const auto& now = std::chrono::steady_clock::now();
+
+    float welcome_level = time_ramp(now, m_last_user_change_time, m_last_user_change_time + std::chrono::seconds(1), m_last_user_change_time + std::chrono::seconds(6), m_last_user_change_time + std::chrono::seconds(9));
+
+    if (welcome_level > 0.0f) {
+        m_welcome->set_color(blend(WHITE, BLACK, welcome_level));
+        m_welcome->render(renderer);
     }
 
     if (m_user != "Nobody") {

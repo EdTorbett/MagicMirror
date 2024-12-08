@@ -26,7 +26,7 @@ typedef enum TextAlignment {
 
 class RenderableText : Renderable {
 public:
-    RenderableText(const std::string& text, int font_siz, const SDL_Color &color, FontType type, TextAlignment alignment = ALIGN_LEFT);
+    RenderableText(std::string text, int font_siz, const SDL_Color &color, FontType type, TextAlignment alignment = ALIGN_LEFT);
     ~RenderableText() override;
     void render(SDL_Renderer *renderer) override;
     [[nodiscard]] int x() const override { return m_rect.x; };
@@ -35,7 +35,10 @@ public:
     [[nodiscard]] int h() const override { return m_rect.h; };
     void set_pos(int x, int y) override;
     void set_text(const std::string &text);
+    void set_color(const SDL_Color &color);
 private:
+    void update();
+    std::string m_raw_text;
     TTF_Font *m_font;
     SDL_Color m_color;
     SDL_Texture *m_message;

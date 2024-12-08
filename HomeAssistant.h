@@ -24,13 +24,16 @@ public:
     HomeAssistant();
     void update();
     void render(SDL_Renderer *renderer);
+    [[nodiscard]] bool running() const { return m_running; }
+    void stop() { m_running = false; }
 private:
     void turn_off_display();
     void turn_on_display();
 
-    time_t m_last_full_fetch;
-    time_t m_last_user_fetch;
-    time_t m_last_presence_fetch;
+    std::chrono::time_point<std::chrono::steady_clock> m_last_full_fetch;
+    std::chrono::time_point<std::chrono::steady_clock> m_last_user_fetch;
+    std::chrono::time_point<std::chrono::steady_clock> m_last_user_change_time;
+    std::chrono::time_point<std::chrono::steady_clock> m_last_presence_fetch;
     std::string m_url;
     std::string m_token;
     std::string m_ed_entity;
@@ -38,6 +41,7 @@ private:
     std::string m_user;
     Calendar m_calendar;
     Forecast m_forecast;
+    RenderableText *m_welcome;
     RenderableText *m_date;
     RenderableText *m_clock;
     RestClient::Connection *m_connection;
@@ -47,6 +51,7 @@ private:
     Presence m_cath_presence;
     Proximity m_ed_proximity;
     Proximity m_cath_proximity;
+    bool m_running{};
 };
 
 

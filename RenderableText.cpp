@@ -5,6 +5,7 @@
 #include "RenderableText.h"
 
 #include <iostream>
+#include <utility>
 
 std::string font_types[] = {
     std::string("fonts/Poppins-Regular.ttf"),
@@ -19,7 +20,8 @@ void text_init() {
     }
 }
 
-RenderableText::RenderableText(const std::string& text, int font_size, const SDL_Color &color, FontType type, TextAlignment alignment) :
+RenderableText::RenderableText(std::string text, int font_size, const SDL_Color &color, FontType type, TextAlignment alignment) :
+m_raw_text(std::move(text)),
 m_font(nullptr),
 m_color(color),
 m_message(nullptr),
@@ -31,9 +33,8 @@ m_rect({0, 0, 0, 0}) {
     TTF_SetFontOutline(m_font, 0);
     TTF_SetFontKerning(m_font, 1);
     TTF_SetFontHinting(m_font, TTF_HINTING_NORMAL);
-    m_text = TTF_RenderUTF8_Blended(m_font, text.c_str(), m_color);
-    m_rect.w = m_text->w;
-    m_rect.h = m_text->h;
+
+    update();
 }
 
 RenderableText::~RenderableText() {
@@ -51,7 +52,18 @@ RenderableText::~RenderableText() {
     }
 }
 
+void RenderableText::set_color(const SDL_Color &color) {
+    m_color = color;
+    update();
+}
+
+
 void RenderableText::set_text(const std::string &text) {
+    m_raw_text = text;
+    update();
+}
+
+void RenderableText::update() {
     if (m_message != nullptr) {
         SDL_DestroyTexture(m_message);
         m_message = nullptr;
@@ -60,35 +72,43 @@ void RenderableText::set_text(const std::string &text) {
         SDL_FreeSurface(m_text);
         m_text = nullptr;
     }
-    m_text = TTF_RenderUTF8_Blended(m_font, text.c_str(), m_color);
 
+    m_text = TTF_RenderUTF8_Blended(m_font, m_raw_text.c_str(), m_color);
     const int orig_w = m_rect.w;
-    m_rect.w = m_text->w;
-    m_rect.h = m_text->h;
+    if (m_text != nullptr) {
+        m_rect.w = m_text->w;
+        m_rect.h = m_text->h;
+    } else {
+        m_rect.w = 0;
+        m_rect.h = 0;
+    }
     if (m_alignment == 1) {
-        m_rect.x += (orig_w >> 1) - (m_text->w >> 1);
+        m_rect.x += (orig_w >> 1) - (m_rect.w >> 1);
     } else if (m_alignment == 2) {
-        m_rect.x += orig_w - m_text->w;
+        m_rect.x += orig_w - m_rect.w;
     }
 }
 
 void RenderableText::render(SDL_Renderer *renderer) {
-    if (m_message == nullptr) {
+    if (m_message == nullptr && m_text != nullptr) {
         m_message = SDL_CreateTextureFromSurface(renderer, m_text);
     }
 
-    const SDL_Point texture_rotation = { m_rect.x, m_rect.y};
-    const SDL_Point rotationCenter = { 540 - texture_rotation.x, 540 - texture_rotation.y };
+    if (m_message != nullptr) {
+        const SDL_Point texture_rotation = { m_rect.x, m_rect.y};
+        const SDL_Point rotationCenter = { 540 - texture_rotation.x, 540 - texture_rotation.y };
 
-    SDL_RenderCopyEx(renderer, m_message, nullptr, &m_rect, -90, &rotationCenter, SDL_FLIP_NONE);
+        SDL_RenderCopyEx(renderer, m_message, nullptr, &m_rect, -90, &rotationCenter, SDL_FLIP_NONE);
+    }
 }
 
 void RenderableText::set_pos(const int x, const int y) {
     m_rect.x = x;
+
     if (m_alignment == 1) {
-        m_rect.x -= m_text->w >> 1;
+        m_rect.x -= m_rect.w >> 1;
     } else if (m_alignment == 2) {
-        m_rect.x -= m_text->w;
+        m_rect.x -= m_rect.w;
     }
 
     m_rect.y = y;
