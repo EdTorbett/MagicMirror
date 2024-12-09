@@ -15,7 +15,7 @@ class CalendarEntry : Renderable {
 public:
     CalendarEntry(const nlohmann::json &entry, const std::chrono::system_clock::time_point &today);
     ~CalendarEntry() override;
-    void render(SDL_Renderer *renderer) override;
+    void render(SDL_Renderer *renderer, float brightness) override;
     [[nodiscard]] int x() const override;
     [[nodiscard]] int y() const override;
     [[nodiscard]] int w() const override;

@@ -24,7 +24,7 @@ SDL_Color blend(const SDL_Color& a, const SDL_Color& b, double alpha);
 class Renderable {
 public:
     virtual ~Renderable() = default;
-    virtual void render(SDL_Renderer *renderer) = 0;
+    virtual void render(SDL_Renderer *renderer, float brightness) = 0;
     [[nodiscard]] virtual int x() const = 0;
     [[nodiscard]] virtual int y() const = 0;
     [[nodiscard]] virtual int w() const = 0;

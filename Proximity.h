@@ -19,7 +19,7 @@ public:
     ~Proximity() override;
     void set_entity(const std::string& entity);
     void fetch(RestClient::Connection *connection);
-    void render(SDL_Renderer* renderer) override;
+    void render(SDL_Renderer* renderer, float brightness) override;
     void set_pos(int x, int y) override;
     [[nodiscard]] bool is_interesting() const;
     [[nodiscard]] int h() const override;

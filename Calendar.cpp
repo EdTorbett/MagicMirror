@@ -68,9 +68,9 @@ void Calendar::update_entry_positions() {
     }
 }
 
-void Calendar::render(SDL_Renderer* renderer) {
+void Calendar::render(SDL_Renderer* renderer, float brightness) {
     for (const auto& entry : this->m_entries) {
-        entry->render(renderer);
+        entry->render(renderer, brightness);
     }
 }
 

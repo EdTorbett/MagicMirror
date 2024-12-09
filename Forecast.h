@@ -16,7 +16,7 @@ public:
     Forecast();
     ~Forecast() override;
     void fetch(RestClient::Connection *connection);
-    void render(SDL_Renderer *renderer) override;
+    void render(SDL_Renderer *renderer, float brightness) override;
     [[nodiscard]] int x() const override;
     [[nodiscard]] int y() const override;
     [[nodiscard]] int w() const override;

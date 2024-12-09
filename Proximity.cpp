@@ -81,7 +81,7 @@ int Proximity::h() const {
     return 160;
 }
 
-void Proximity::render(SDL_Renderer* renderer) {
+void Proximity::render(SDL_Renderer* renderer, float brightness) {
     if (!is_interesting()) {
         return;
     }
@@ -109,12 +109,12 @@ void Proximity::render(SDL_Renderer* renderer) {
         m_eta->set_text("ETA unknown");
     }
 
-    m_startSymbol->render(renderer);
-    m_endSymbol->render(renderer);
-    m_travellerSymbol->render(renderer);
-    m_eta->render(renderer);
+    m_startSymbol->render(renderer, brightness);
+    m_endSymbol->render(renderer, brightness);
+    m_travellerSymbol->render(renderer, brightness);
+    m_eta->render(renderer, brightness);
 
-    SDL_SetRenderDrawColor(renderer, 0x80, 0x80, 0x80, 0xFF);
+    SDL_SetRenderDrawColor(renderer, 0x80, 0x80, 0x80, static_cast<uint8_t>(0xFF * brightness));
     if (traveller_position > 150) {
         SDL_RenderDrawLine(renderer, m_x + 150, m_y + 60, m_x + 50 + traveller_position, m_y + 60);
     }

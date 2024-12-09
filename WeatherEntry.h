@@ -15,7 +15,7 @@ class WeatherEntry : Renderable {
 public:
     explicit WeatherEntry(const std::string &line_item);
     ~WeatherEntry() override;
-    void render(SDL_Renderer *renderer) override;
+    void render(SDL_Renderer *renderer, float brightness) override;
     int x() const override;
     int y() const override;
     int w() const override;

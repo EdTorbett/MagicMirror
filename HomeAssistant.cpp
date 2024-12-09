@@ -87,7 +87,7 @@ HomeAssistant::HomeAssistant() :
 
     m_date = new RenderableText("Date goes here", 80, WHITE, FONTTYPE_REGULAR, ALIGN_RIGHT);
     m_clock = new RenderableText("00:00", 80, WHITE, FONTTYPE_MONO, ALIGN_RIGHT);
-    m_welcome = new RenderableText("", 80, BLACK, FONTTYPE_REGULAR, ALIGN_CENTER);
+    m_welcome = new RenderableText("", 80, WHITE, FONTTYPE_REGULAR, ALIGN_CENTER);
     m_welcome->set_pos(540, 960);
 }
 
@@ -125,8 +125,9 @@ void HomeAssistant::update() {
             if (m_user != new_user) {
                 std::cout << "User changed: " << new_user << std::endl;
                 m_user = new_user;
-                if (m_user != "Nobody" && m_user != "Unknown") {
-                    m_last_user_change_time = now;
+                m_last_user_change_time = now;
+                if (m_user == "Nobody" || m_user == "Unknown") {
+                } else {
                     m_welcome->set_text("Welcome, " + m_user + "!");
                 }
             }
@@ -196,21 +197,24 @@ void HomeAssistant::render(SDL_Renderer *renderer) {
     }
     const auto& now = std::chrono::steady_clock::now();
 
-    float welcome_level = time_ramp(now, m_last_user_change_time, m_last_user_change_time + std::chrono::seconds(1), m_last_user_change_time + std::chrono::seconds(6), m_last_user_change_time + std::chrono::seconds(9));
-
-    if (welcome_level > 0.0f) {
-        m_welcome->set_color(blend(WHITE, BLACK, welcome_level));
-        m_welcome->render(renderer);
+    if (m_user == "Nobody") {
+        return;
     }
 
-    if (m_user != "Nobody") {
-        if (m_user != "Unknown") {
-            this->m_calendar.render(renderer);
+    float brightness = time_ramp(now, m_last_user_change_time, m_last_user_change_time + std::chrono::seconds(2));
+
+    if (m_user != "Unknown") {
+        float welcome_level = time_ramp(now, m_last_user_change_time, m_last_user_change_time + std::chrono::seconds(1), m_last_user_change_time + std::chrono::seconds(6), m_last_user_change_time + std::chrono::seconds(9));
+
+        if (welcome_level > 0.0f) {
+            m_welcome->render(renderer, welcome_level);
         }
-        this->m_forecast.render(renderer);
+
+        this->m_calendar.render(renderer, brightness);
     }
-    this->m_ed_proximity.render(renderer);
-    this->m_cath_proximity.render(renderer);
+    this->m_forecast.render(renderer, brightness);
+    this->m_ed_proximity.render(renderer, brightness);
+    this->m_cath_proximity.render(renderer, brightness);
 
     time_t rawtime;
     time ( &rawtime );
@@ -219,12 +223,12 @@ void HomeAssistant::render(SDL_Renderer *renderer) {
     os << DAYS_OF_WEEK[timeinfo->tm_wday] << " " << std::setw(2) << timeinfo->tm_mday << " " << MONTHS[timeinfo->tm_mon];
     m_date->set_text(os.str());
     m_date->set_pos(1080, 1920 - m_date->h());
-    m_date->render(renderer);
+    m_date->render(renderer, brightness);
 
     os.str("");
     os.clear();
     os << std::put_time(timeinfo, "%H:%M");
     m_clock->set_text(os.str());
     m_clock->set_pos(1080, 1920 - m_clock->h() - m_date->h());
-    m_clock->render(renderer);
+    m_clock->render(renderer, brightness);
 }

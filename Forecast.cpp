@@ -57,11 +57,11 @@ void Forecast::set_pos(int x, int y) {
     this->update_entry_positions();
 }
 
-void Forecast::render(SDL_Renderer* renderer) {
+void Forecast::render(SDL_Renderer* renderer, float brightness) {
     for (const auto& entry : this->m_entries) {
-        entry->render(renderer);
+        entry->render(renderer, brightness);
     }
-    SDL_SetRenderDrawColor(renderer, 0x80, 0x80, 0x80, 0xFF);
+    SDL_SetRenderDrawColor(renderer, 0x80, 0x80, 0x80, static_cast<uint8_t>(0xFF * brightness));
     SDL_RenderDrawLine(renderer, this->y() + this->h(), 1080 - this->x(), this->y() + this->h(), 1080 - (this->x() + this->w()));
 }
 

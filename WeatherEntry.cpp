@@ -54,21 +54,21 @@ WeatherEntry::~WeatherEntry() {
     delete wind;
 }
 
-void WeatherEntry::render(SDL_Renderer *renderer) {
+void WeatherEntry::render(SDL_Renderer *renderer, const float brightness) {
     if (this->symbol != nullptr) {
-        this->symbol->render(renderer);
+        this->symbol->render(renderer, brightness);
     }
     if (this->time != nullptr) {
-        this->time->render(renderer);
+        this->time->render(renderer, brightness);
     }
     if (this->temperature != nullptr) {
-        this->temperature->render(renderer);
+        this->temperature->render(renderer, brightness);
     }
     if (this->precipitation != nullptr) {
-        this->precipitation->render(renderer);
+        this->precipitation->render(renderer, brightness);
     }
     if (this->wind != nullptr) {
-        this->wind->render(renderer);
+        this->wind->render(renderer, brightness);
     }
 }
 

@@ -117,20 +117,20 @@ CalendarEntry::~CalendarEntry() {
     delete daysRemaining;
 }
 
-void CalendarEntry::render(SDL_Renderer *renderer) {
+void CalendarEntry::render(SDL_Renderer *renderer, float brightness) {
     if (this->date != nullptr) {
-        this->date->render(renderer);
+        this->date->render(renderer, brightness);
     }
     if (this->time != nullptr) {
-        this->time->render(renderer);
+        this->time->render(renderer, brightness);
     }
     if (this->description != nullptr) {
-        this->description->render(renderer);
+        this->description->render(renderer, brightness);
     }
     if (this->daysRemaining != nullptr) {
-        this->daysRemaining->render(renderer);
+        this->daysRemaining->render(renderer, brightness);
     }
-    SDL_SetRenderDrawColor(renderer, 0x80, 0x80, 0x80, 0xFF);
+    SDL_SetRenderDrawColor(renderer, 0x80, 0x80, 0x80, static_cast<uint8_t>(0xFF * brightness));
     SDL_RenderDrawLine(renderer, this->y() + this->h(), 1080 - this->x(), this->y() + this->h(), 1080 - (this->x() + this->w()));
 }
 

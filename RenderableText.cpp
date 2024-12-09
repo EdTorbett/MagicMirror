@@ -20,14 +20,14 @@ void text_init() {
     }
 }
 
-RenderableText::RenderableText(std::string text, int font_size, const SDL_Color &color, FontType type, TextAlignment alignment) :
+RenderableText::RenderableText(std::string text, const int font_size, const SDL_Color &color, const FontType type, const TextAlignment alignment) :
 m_raw_text(std::move(text)),
 m_font(nullptr),
 m_color(color),
 m_message(nullptr),
 m_text(nullptr),
-m_alignment(alignment),
-m_rect({0, 0, 0, 0}) {
+m_rect({0, 0, 0, 0}),
+m_alignment(alignment) {
     m_font = TTF_OpenFont(font_types[type].c_str(), font_size);
     TTF_SetFontStyle(m_font, TTF_STYLE_NORMAL);
     TTF_SetFontOutline(m_font, 0);
@@ -89,7 +89,7 @@ void RenderableText::update() {
     }
 }
 
-void RenderableText::render(SDL_Renderer *renderer) {
+void RenderableText::render(SDL_Renderer *renderer, float brightness) {
     if (m_message == nullptr && m_text != nullptr) {
         m_message = SDL_CreateTextureFromSurface(renderer, m_text);
     }
@@ -98,7 +98,9 @@ void RenderableText::render(SDL_Renderer *renderer) {
         const SDL_Point texture_rotation = { m_rect.x, m_rect.y};
         const SDL_Point rotationCenter = { 540 - texture_rotation.x, 540 - texture_rotation.y };
 
+        SDL_SetTextureAlphaMod(m_message, static_cast<uint8_t>(255 * brightness));
         SDL_RenderCopyEx(renderer, m_message, nullptr, &m_rect, -90, &rotationCenter, SDL_FLIP_NONE);
+        SDL_SetTextureAlphaMod(m_message, 0xFF);
     }
 }
 
