@@ -19,20 +19,29 @@ wind(nullptr) {
     time = new RenderableText(item, 24, WHITE, FONTTYPE_MONO, ALIGN_CENTER);
     getline (ss, item, ',');
     std::string symbol_text = "\uF4BC";
+    FontType font_type = FONTTYPE_SYMBOL;
     int symbol_size = 60;
     if (item == "cloudy") {
         symbol_text = "\uF409";
     } else if (item == "partlycloudy") {
         symbol_text = "\uF475";
+    } else if (item == "partlycloudy-night") {
+        symbol_text = "\uF40D";
     } else if (item == "sunny") {
         symbol_text = "\uF4B6";
     } else if (item == "rainy") {
         symbol_text = "\uF494";
-        symbol_size = 80;
+    } else if (item == "clear-night") {
+        symbol_text = "\uF468";
+    } else if (item == "thunder") {
+        symbol_text = "\uF4BC";
     } else {
         std::cout << "Unknown weather: " << item << std::endl;
+        symbol_text = item;
+        font_type = FONTTYPE_REGULAR;
+        symbol_size = 30;
     }
-    symbol = new RenderableText(symbol_text, symbol_size, WHITE, FONTTYPE_SYMBOL, ALIGN_CENTER);
+    symbol = new RenderableText(symbol_text, symbol_size, WHITE, font_type, ALIGN_CENTER);
     getline (ss, item, ',');
     temperature = new RenderableText(item + "\u00B0C", 20, WHITE, FONTTYPE_MONO, ALIGN_CENTER);
     getline (ss, item, ',');

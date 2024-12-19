@@ -126,8 +126,7 @@ void HomeAssistant::update() {
                 std::cout << "User changed: " << new_user << std::endl;
                 m_user = new_user;
                 m_last_user_change_time = now;
-                if (m_user == "Nobody" || m_user == "Unknown") {
-                } else {
+                if (m_user != "Nobody" && m_user != "Unknown") {
                     m_welcome->set_text("Welcome, " + m_user + "!");
                 }
             }
@@ -197,13 +196,16 @@ void HomeAssistant::render(SDL_Renderer *renderer) {
     }
     const auto& now = std::chrono::steady_clock::now();
 
-    if (m_user == "Nobody") {
-        return;
-    }
-
     float brightness = time_ramp(now, m_last_user_change_time, m_last_user_change_time + std::chrono::seconds(2));
 
-    if (m_user != "Unknown") {
+    if (m_user == "Nobody") {
+        brightness = 1 - brightness;
+        if (brightness == 0) {
+            return;
+        }
+    }
+
+    if (m_user != "Nobody" && m_user != "Unknown") {
         float welcome_level = time_ramp(now, m_last_user_change_time, m_last_user_change_time + std::chrono::seconds(1), m_last_user_change_time + std::chrono::seconds(6), m_last_user_change_time + std::chrono::seconds(9));
 
         if (welcome_level > 0.0f) {
