@@ -9,23 +9,21 @@
 #include <connection.h>
 #include <string>
 
+#include "Line.h"
 #include "Renderable.h"
 #include "RenderableText.h"
 
 
-class Proximity : Renderable {
+class Proximity final : public Renderable {
 public:
     explicit Proximity(const std::string &symbol);
     ~Proximity() override;
     void set_entity(const std::string& entity);
     void fetch(RestClient::Connection *connection);
-    void render(SDL_Renderer* renderer, float brightness) override;
-    void set_pos(int x, int y) override;
+    void render(SDL_Renderer* renderer, const std::chrono::time_point<std::chrono::steady_clock> &now) override;
     [[nodiscard]] bool is_interesting() const;
     [[nodiscard]] int h() const override;
     [[nodiscard]] int w() const override;
-    [[nodiscard]] int x() const override;
-    [[nodiscard]] int y() const override;
 private:
     std::string m_entity;
     bool m_travelling;
@@ -34,13 +32,13 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> m_poll_time;
     int m_start_proximity;
     double m_speed;
-    int m_x;
-    int m_y;
 
-    RenderableText *m_startSymbol;
-    RenderableText *m_endSymbol;
-    RenderableText *m_travellerSymbol;
-    RenderableText *m_eta;
+    std::shared_ptr<RenderableText> m_startSymbol;
+    std::shared_ptr<RenderableText> m_endSymbol;
+    std::shared_ptr<RenderableText> m_travellerSymbol;
+    std::shared_ptr<RenderableText> m_eta;
+    std::shared_ptr<Line> m_line1;
+    std::shared_ptr<Line> m_line2;
 };
 
 

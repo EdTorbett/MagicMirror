@@ -3,6 +3,8 @@
 //
 
 #include "CalendarEntry.h"
+#include "RenderableText.h"
+#include "Line.h"
 #include <sstream>
 
 const std::string DAYS_OF_WEEK[] = {
@@ -35,11 +37,12 @@ const std::string END_KEY = "end";
 const std::string DATE_KEY = "date";
 const std::string DATETIME_KEY = "dateTime";
 
-CalendarEntry::CalendarEntry(const nlohmann::json &entry, const std::chrono::system_clock::time_point &today) :
-date(nullptr),
-description(nullptr),
-time(nullptr),
-daysRemaining(nullptr) {
+CalendarEntry::CalendarEntry(const nlohmann::json &entry, const std::chrono::system_clock::time_point &today) {
+    RenderableText *date = nullptr;
+    RenderableText *time = nullptr;
+    RenderableText *description = nullptr;
+    RenderableText *daysRemaining = nullptr;
+
     time_t event_start_time_t;
     tm event_time({0});
     std::ostringstream timeStringStream("");
@@ -78,7 +81,7 @@ daysRemaining(nullptr) {
             daysToEvent << days_till_event << " days time";
         }
 
-        this->daysRemaining = new RenderableText(daysToEvent.str(), 16, YELLOW, FONTTYPE_MONO, ALIGN_RIGHT);
+        daysRemaining = new RenderableText(daysToEvent.str(), 16, YELLOW, FONTTYPE_MONO, ALIGN_RIGHT);
     }
 
     if (entry.contains(END_KEY) && entry[END_KEY].contains(DATE_KEY)) {
@@ -99,68 +102,28 @@ daysRemaining(nullptr) {
     }
 
     if (!timeStringStream.str().empty()) {
-        this->time = new RenderableText(timeStringStream.str(), 16, YELLOW, FONTTYPE_MONO, ALIGN_RIGHT);
+        time = new RenderableText(timeStringStream.str(), 16, YELLOW, FONTTYPE_MONO, ALIGN_RIGHT);
     }
     if (!dateStringStream.str().empty()) {
-        this->date = new RenderableText(dateStringStream.str(), 16, YELLOW, FONTTYPE_MONO, ALIGN_LEFT);
+        date = new RenderableText(dateStringStream.str(), 16, YELLOW, FONTTYPE_MONO, ALIGN_LEFT);
     }
 
     if (entry.contains("summary") and entry["summary"] != nullptr) {
-        this->description = new RenderableText(entry["summary"], 22, WHITE, FONTTYPE_REGULAR);
+        description = new RenderableText(entry["summary"], 22, WHITE, FONTTYPE_REGULAR);
     }
-}
 
-CalendarEntry::~CalendarEntry() {
-    delete date;
-    delete time;
-    delete description;
-    delete daysRemaining;
-}
+    if (date != nullptr) {
+        add_child(std::shared_ptr<RenderableText>(date), 0, 2);
+    }
+    if (daysRemaining != nullptr) {
+        add_child(std::shared_ptr<RenderableText>(daysRemaining), CalendarEntry::w() - 5, 2);
+    }
+    if (time != nullptr) {
+        add_child(std::shared_ptr<RenderableText>(time), CalendarEntry::w() - 5, 38);
+    }
+    if (description != nullptr) {
+        add_child(std::shared_ptr<RenderableText>(description), 0, 22);
+    }
 
-void CalendarEntry::render(SDL_Renderer *renderer, float brightness) {
-    if (this->date != nullptr) {
-        this->date->render(renderer, brightness);
-    }
-    if (this->time != nullptr) {
-        this->time->render(renderer, brightness);
-    }
-    if (this->description != nullptr) {
-        this->description->render(renderer, brightness);
-    }
-    if (this->daysRemaining != nullptr) {
-        this->daysRemaining->render(renderer, brightness);
-    }
-    SDL_SetRenderDrawColor(renderer, 0x80, 0x80, 0x80, static_cast<uint8_t>(0xFF * brightness));
-    SDL_RenderDrawLine(renderer, this->y() + this->h(), 1080 - this->x(), this->y() + this->h(), 1080 - (this->x() + this->w()));
-}
-
-int CalendarEntry::x() const {
-    return this->date->x();
-}
-
-int CalendarEntry::y() const {
-    return this->date->y() - 2;
-}
-
-int CalendarEntry::w() const {
-    return 440;
-}
-
-int CalendarEntry::h() const {
-    return 60;
-}
-
-void CalendarEntry::set_pos(int x, int y) {
-    if (this->date != nullptr) {
-        this->date->set_pos(x, y + 2);
-    }
-    if (this->daysRemaining != nullptr) {
-        this->daysRemaining->set_pos(x + (this->w() - 5), y + 2);
-    }
-    if (this->time != nullptr) {
-        this->time->set_pos(x + (this->w() - 5), y + 38);
-    }
-    if (this->description != nullptr) {
-        this->description->set_pos(x, y + 22);
-    }
+    add_child(std::make_shared<Line>(GREY, CalendarEntry::w(), 0), 0, CalendarEntry::h());
 }

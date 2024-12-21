@@ -3,16 +3,18 @@
 //
 
 #include "WeatherEntry.h"
+#include "RenderableText.h"
 #include <sstream>
 #include <iostream>
 #include <string>
 
-WeatherEntry::WeatherEntry(const std::string& line_item) :
-symbol(nullptr),
-time(nullptr),
-temperature(nullptr),
-precipitation(nullptr),
-wind(nullptr) {
+WeatherEntry::WeatherEntry(const std::string& line_item) {
+    RenderableText *symbol = nullptr;
+    RenderableText *time = nullptr;
+    RenderableText *temperature = nullptr;
+    RenderableText *precipitation = nullptr;
+    RenderableText *wind = nullptr;
+
     std::stringstream ss(line_item);
     std::string item;
     getline (ss, item, ',');
@@ -49,44 +51,26 @@ wind(nullptr) {
         precipitation = new RenderableText(item + "mm", 20, BLUE, FONTTYPE_MONO, ALIGN_CENTER);
     }
     getline (ss, item, ',');
-    int wind_speed = std::stoi(item);
-    if (wind_speed >= 15) {
+    if (int wind_speed = std::stoi(item); wind_speed >= 15) {
         wind = new RenderableText(std::to_string(wind_speed) + "mph", 20, AMBER, FONTTYPE_MONO, ALIGN_CENTER);
     }
-}
 
-WeatherEntry::~WeatherEntry() {
-    delete symbol;
-    delete time;
-    delete temperature;
-    delete precipitation;
-    delete wind;
-}
+    int x = 45;
+    int y = 0;
 
-void WeatherEntry::render(SDL_Renderer *renderer, const float brightness) {
-    if (this->symbol != nullptr) {
-        this->symbol->render(renderer, brightness);
+    add_child(std::shared_ptr<Renderable>(time), x, y);
+    y += time->h();
+    add_child(std::shared_ptr<Renderable>(symbol), x, y);
+    y += symbol->h();
+    add_child(std::shared_ptr<Renderable>(temperature), x, y);
+    y += temperature->h();
+    if (precipitation != nullptr) {
+        add_child(std::shared_ptr<Renderable>(precipitation), x, y);
+        y += precipitation->h();
     }
-    if (this->time != nullptr) {
-        this->time->render(renderer, brightness);
+    if (wind != nullptr) {
+        add_child(std::shared_ptr<Renderable>(wind), x, y);
     }
-    if (this->temperature != nullptr) {
-        this->temperature->render(renderer, brightness);
-    }
-    if (this->precipitation != nullptr) {
-        this->precipitation->render(renderer, brightness);
-    }
-    if (this->wind != nullptr) {
-        this->wind->render(renderer, brightness);
-    }
-}
-
-int WeatherEntry::x() const {
-    return m_x;
-}
-
-int WeatherEntry::y() const {
-    return m_y;
 }
 
 int WeatherEntry::w() const {
@@ -95,29 +79,4 @@ int WeatherEntry::w() const {
 
 int WeatherEntry::h() const {
     return 150;
-}
-
-void WeatherEntry::set_pos(int x, int y) {
-    m_x = x;
-    m_y = y;
-
-    if (this->time != nullptr) {
-        this->time->set_pos(x + 45, y);
-        y += this->time->h();
-    }
-    if (this->symbol != nullptr) {
-        this->symbol->set_pos(x + 45, y);
-        y += this->symbol->h();
-    }
-    if (this->temperature != nullptr) {
-        this->temperature->set_pos(x + 45, y);
-        y += this->temperature->h();
-    }
-    if (this->precipitation != nullptr) {
-        this->precipitation->set_pos(x + 45, y);
-        y += this->precipitation->h();
-    }
-    if (this->wind != nullptr) {
-        this->wind->set_pos(x + 45, y);
-    }
 }

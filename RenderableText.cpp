@@ -74,7 +74,6 @@ void RenderableText::update() {
     }
 
     m_text = TTF_RenderUTF8_Blended(m_font, m_raw_text.c_str(), m_color);
-    const int orig_w = m_rect.w;
     if (m_text != nullptr) {
         m_rect.w = m_text->w;
         m_rect.h = m_text->h;
@@ -83,35 +82,33 @@ void RenderableText::update() {
         m_rect.h = 0;
     }
     if (m_alignment == 1) {
-        m_rect.x += (orig_w >> 1) - (m_rect.w >> 1);
+        m_rect.x = -(m_rect.w >> 1);
     } else if (m_alignment == 2) {
-        m_rect.x += orig_w - m_rect.w;
+        m_rect.x = -m_rect.w;
+    } else {
+        m_rect.x = 0;
     }
 }
 
-void RenderableText::render(SDL_Renderer *renderer, float brightness) {
+void RenderableText::render(SDL_Renderer *renderer, const std::chrono::time_point<std::chrono::steady_clock> &now) {
+    if (skip_render(now)) {
+        return;
+    }
     if (m_message == nullptr && m_text != nullptr) {
         m_message = SDL_CreateTextureFromSurface(renderer, m_text);
     }
 
     if (m_message != nullptr) {
-        const SDL_Point texture_rotation = { m_rect.x, m_rect.y};
+        SDL_Rect rect = m_rect;
+        rect.x += x();
+        rect.y += y();
+
+        const SDL_Point texture_rotation = { rect.x, rect.y};
         const SDL_Point rotationCenter = { 540 - texture_rotation.x, 540 - texture_rotation.y };
 
-        SDL_SetTextureAlphaMod(m_message, static_cast<uint8_t>(255 * brightness));
-        SDL_RenderCopyEx(renderer, m_message, nullptr, &m_rect, -90, &rotationCenter, SDL_FLIP_NONE);
+        SDL_SetTextureAlphaMod(m_message, static_cast<uint8_t>(static_cast<float>(m_color.a) * get_brightness(now)));
+        SDL_RenderCopyEx(renderer, m_message, nullptr, &rect, -90, &rotationCenter, SDL_FLIP_NONE);
         SDL_SetTextureAlphaMod(m_message, 0xFF);
     }
-}
-
-void RenderableText::set_pos(const int x, const int y) {
-    m_rect.x = x;
-
-    if (m_alignment == 1) {
-        m_rect.x -= m_rect.w >> 1;
-    } else if (m_alignment == 2) {
-        m_rect.x -= m_rect.w;
-    }
-
-    m_rect.y = y;
+    Renderable::render(renderer, now);
 }

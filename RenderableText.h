@@ -24,16 +24,13 @@ typedef enum TextAlignment {
     ALIGN_RIGHT
 } TextAlignment;
 
-class RenderableText : Renderable {
+class RenderableText : public Renderable {
 public:
     RenderableText(std::string text, int font_size, const SDL_Color &color, FontType type, TextAlignment alignment = ALIGN_LEFT);
     ~RenderableText() override;
-    void render(SDL_Renderer *renderer, float brightness) override;
-    [[nodiscard]] int x() const override { return m_rect.x; };
-    [[nodiscard]] int y() const override { return m_rect.y; };
+    void render(SDL_Renderer *renderer, const std::chrono::time_point<std::chrono::steady_clock> &now) override;
     [[nodiscard]] int w() const override { return m_rect.w; };
     [[nodiscard]] int h() const override { return m_rect.h; };
-    void set_pos(int x, int y) override;
     void set_text(const std::string &text);
     void set_color(const SDL_Color &color);
 private:

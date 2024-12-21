@@ -34,6 +34,8 @@ add_executable(MagicMirror main.cpp
         Forecast.h
         Proximity.cpp
         Proximity.h
+        Line.cpp
+        Line.h
 )
 
 target_link_libraries(MagicMirror PRIVATE

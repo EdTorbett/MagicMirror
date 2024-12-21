@@ -10,11 +10,21 @@
 #include <nlohmann/json.hpp>
 
 
-Proximity::Proximity(const std::string &symbol): m_travelling(false), m_proximity(0), m_start_proximity(0), m_speed(0), m_x(0), m_y(0) {
-    m_startSymbol = new RenderableText("\uF3A3", 120, WHITE, FONTTYPE_SYMBOL, ALIGN_LEFT);
-    m_endSymbol = new RenderableText("\uF38F", 120, WHITE, FONTTYPE_SYMBOL, ALIGN_RIGHT);
-    m_travellerSymbol = new RenderableText(symbol, 120, WHITE, FONTTYPE_SYMBOL, ALIGN_CENTER);
-    m_eta = new RenderableText("ETA: Unknown", 40, WHITE, FONTTYPE_MONO, ALIGN_CENTER);
+Proximity::Proximity(const std::string &symbol): m_travelling(false), m_proximity(0), m_start_proximity(0), m_speed(0) {
+    m_startSymbol = std::make_shared<RenderableText>("\uF3A3", 120, WHITE, FONTTYPE_SYMBOL, ALIGN_LEFT);
+    m_endSymbol = std::make_shared<RenderableText>("\uF38F", 120, WHITE, FONTTYPE_SYMBOL, ALIGN_RIGHT);
+    m_travellerSymbol = std::make_shared<RenderableText>(symbol, 120, WHITE, FONTTYPE_SYMBOL, ALIGN_CENTER);
+    m_eta = std::make_shared<RenderableText>("ETA: Unknown", 40, WHITE, FONTTYPE_MONO, ALIGN_CENTER);
+    add_child(m_startSymbol, -450, -80);
+    add_child(m_endSymbol, 450, -80);
+    add_child(m_travellerSymbol, 0, -80);
+    add_child(m_eta, 0, 40);
+
+    m_line1 = std::make_shared<Line>(WHITE, 350, 0);
+    m_line2 = std::make_shared<Line>(WHITE, -350, 0);
+
+    add_child(m_line1, -400, 60);
+    add_child(m_line2, 400, 60);
 }
 
 Proximity::~Proximity() = default;
@@ -26,8 +36,7 @@ void Proximity::set_entity(const std::string& entity) {
 
 void Proximity::fetch(RestClient::Connection* connection) {
     const auto& now = std::chrono::steady_clock::now();
-    auto r = connection->get("/api/states/" + m_entity);
-    if (r.code == 200) {
+    if (auto r = connection->get("/api/states/" + m_entity); r.code == 200) {
         nlohmann::json json_result = nlohmann::json::parse(r.body);
         const std::string proximity_str = json_result["state"];
         m_proximity = std::stoi(proximity_str);
@@ -52,47 +61,31 @@ void Proximity::fetch(RestClient::Connection* connection) {
     }
 }
 
-void Proximity::set_pos(int x, int y) {
-    m_x = x - 600;
-    m_y = y - 80;
-    m_startSymbol->set_pos(x - 600, m_y);
-    m_endSymbol->set_pos(x + 600, m_y);
-    m_travellerSymbol->set_pos(x, m_y);
-    m_eta->set_pos(x, m_y + 120);
-}
-
 bool Proximity::is_interesting() const {
     return m_travelling;
 }
 
-int Proximity::x() const {
-    return m_x;
-}
-
-int Proximity::y() const {
-    return m_y;
-}
-
 int Proximity::w() const {
-    return 1200;
+    return 1000;
 }
 
 int Proximity::h() const {
-    return 160;
+    return 200;
 }
 
-void Proximity::render(SDL_Renderer* renderer, float brightness) {
-    if (!is_interesting()) {
+void Proximity::render(SDL_Renderer* renderer, const std::chrono::time_point<std::chrono::steady_clock> &now) {
+    if (skip_render(now)) {
         return;
     }
-    const auto &now = std::chrono::steady_clock::now();
     std::ostringstream oss;
     if (m_proximity > 1000) {
         oss << std::setprecision(2) << std::fixed << (m_proximity / 1000.0) << "km away, ";
     } else {
         oss << m_proximity << "m away, ";
     }
-    const int traveller_position = 900 * (m_start_proximity - m_proximity) / m_start_proximity;
+    const int traveller_position = 800 * (m_start_proximity - m_proximity) / m_start_proximity;
+    m_travellerSymbol->set_pos(x() - 400 + traveller_position, y() - 80);
+
     if (m_speed > 0) {
         const auto time_since_poll = now - m_poll_time;
         const auto time_taken = std::chrono::seconds(static_cast<int>(m_proximity / m_speed));
@@ -101,24 +94,22 @@ void Proximity::render(SDL_Renderer* renderer, float brightness) {
 
         std::string s(30, '\0');
         std::strftime(&s[0], s.size(), "ETA %H:%M:%S", std::localtime(&arrival_time));
-
         m_eta->set_text(s);
-        m_travellerSymbol->set_pos(m_x + 150 + traveller_position, m_y);
     } else {
         // Unknown ETA
         m_eta->set_text("ETA unknown");
     }
 
-    m_startSymbol->render(renderer, brightness);
-    m_endSymbol->render(renderer, brightness);
-    m_travellerSymbol->render(renderer, brightness);
-    m_eta->render(renderer, brightness);
-
-    SDL_SetRenderDrawColor(renderer, 0x80, 0x80, 0x80, static_cast<uint8_t>(0xFF * brightness));
     if (traveller_position > 150) {
-        SDL_RenderDrawLine(renderer, m_x + 150, m_y + 60, m_x + 50 + traveller_position, m_y + 60);
+        m_line1->set_dx(traveller_position - 150);
+    } else {
+        m_line1->set_dx(0);
     }
-    if (traveller_position < 750) {
-        SDL_RenderDrawLine(renderer, m_x + 250 + traveller_position, m_y + 60, m_x + 1050, m_y + 60);
+    if (traveller_position < 850) {
+        m_line2->set_dx(-850 + traveller_position);
+    } else {
+        m_line2->set_dx(0);
     }
+
+    Renderable::render(renderer, now);
 }

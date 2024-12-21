@@ -8,10 +8,6 @@
 
 Calendar::Calendar() = default;
 
-Calendar::~Calendar() {
-    this->m_entries.clear();
-}
-
 using days = std::chrono::duration<int64_t, std::ratio<86400>>;
 
 void Calendar::fetch(RestClient::Connection *connection) {
@@ -30,72 +26,31 @@ void Calendar::fetch(RestClient::Connection *connection) {
     }
     nlohmann::json json_result = nlohmann::json::parse(r.body);
 
-    this->m_entries.clear();
+    clear_children();
 
     int count = 0;
 
+    std::vector<std::shared_ptr<CalendarEntry>> entries;
+
     for (const auto& item : json_result) {
-        auto *entry = new CalendarEntry(item, time);
-        this->m_entries.emplace_back(entry);
+        entries.push_back(std::make_shared<CalendarEntry>(item, time));
         if (++count == 10) {
             break;
         }
     }
 
-    update_entry_positions();
-}
+    int x_offset = 50;
+    int y_offset = 0;
 
-void Calendar::set_pos(int x, int y) {
-    this->m_x = x;
-    this->m_y = y;
-    update_entry_positions();
-}
-
-void Calendar::update_entry_positions() {
-    int x_offset = this->m_x + 50;
-    int y_offset = this->m_y;
-
-    const unsigned int split = (this->m_entries.size() + 1) / 2;
+    const unsigned int split = (entries.size() + 1) / 2;
     unsigned int i = 0;
-    for (const auto& entry : this->m_entries) {
-        entry->set_pos(x_offset, y_offset);
+    for (const auto& entry : entries) {
+        add_child(entry, x_offset, y_offset);
         y_offset += entry->h();
         i += 1;
         if (i == split) {
-            x_offset += 540;
-            y_offset = this->m_y;
+            x_offset = 590;
+            y_offset = 0;
         }
     }
-}
-
-void Calendar::render(SDL_Renderer* renderer, float brightness) {
-    for (const auto& entry : this->m_entries) {
-        entry->render(renderer, brightness);
-    }
-}
-
-int Calendar::x() const {
-    return this->m_x;
-}
-
-int Calendar::y() const {
-    return this->m_y;
-}
-
-int Calendar::h() const {
-    int h = 0;
-    for (const auto& entry : this->m_entries) {
-        h += entry->h();
-    }
-    return h;
-}
-
-int Calendar::w() const {
-    int w = 0;
-    for (const auto& entry : this->m_entries) {
-        if (entry->w() > w) {
-            w = entry->w();
-        }
-    }
-    return w;
 }
