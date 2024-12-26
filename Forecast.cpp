@@ -41,6 +41,8 @@ void Forecast::fetch(RestClient::Connection *connection) {
 
     int x_offset = 0;
 
+    clear_children();
+
     for (const auto& entry : entries) {
         add_child(entry, x_offset, 0);
         x_offset += entry->w();
@@ -50,7 +52,7 @@ void Forecast::fetch(RestClient::Connection *connection) {
 }
 
 int Forecast::h() const {
-    return 150;
+    return 180;
 }
 
 int Forecast::w() const {

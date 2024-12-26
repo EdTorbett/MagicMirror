@@ -48,7 +48,7 @@ protected:
     void add_child(const std::shared_ptr<Renderable>& child, int x, int y);
     void clear_children();
     [[nodiscard]] bool skip_render(const std::chrono::time_point<std::chrono::steady_clock> &now) const;
-    [[nodiscard]] float get_brightness(const std::chrono::time_point<std::chrono::steady_clock> &now) const;
+    [[nodiscard]] float get_brightness(const std::chrono::time_point<std::chrono::steady_clock> &now);
 };
 
 

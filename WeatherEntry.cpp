@@ -78,5 +78,5 @@ int WeatherEntry::w() const {
 }
 
 int WeatherEntry::h() const {
-    return 150;
+    return 180;
 }

@@ -65,11 +65,14 @@ void Renderable::set_visible(const bool visible, const std::chrono::time_point<s
     }
 }
 
-float Renderable::get_brightness(const std::chrono::time_point<std::chrono::steady_clock> &now) const {
+float Renderable::get_brightness(const std::chrono::time_point<std::chrono::steady_clock> &now) {
     float brightness = 0.0f;
     if (m_transient) {
         if (m_visible) {
             brightness = time_ramp(now, m_lastVisibleChangeTime, m_lastVisibleChangeTime + std::chrono::seconds(2), m_lastVisibleChangeTime + std::chrono::seconds(8), m_lastVisibleChangeTime + std::chrono::seconds(10));
+            if (now > m_lastVisibleChangeTime + std::chrono::seconds(10)) {
+                m_visible = false;
+            }
         } else {
             brightness = 1 - time_ramp(now, m_lastVisibleChangeTime, m_lastVisibleChangeTime + std::chrono::seconds(2));
         }

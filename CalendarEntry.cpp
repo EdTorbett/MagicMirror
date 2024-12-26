@@ -45,6 +45,7 @@ CalendarEntry::CalendarEntry(const nlohmann::json &entry, const std::chrono::sys
 
     time_t event_start_time_t;
     tm event_time({0});
+    tm event_end_tm({0});
     std::ostringstream timeStringStream("");
     std::ostringstream dateStringStream("");
     if (entry.contains("start")) {
@@ -62,7 +63,6 @@ CalendarEntry::CalendarEntry(const nlohmann::json &entry, const std::chrono::sys
         event_time = *localtime(&event_start_time_t);
 
         dateStringStream.str("");
-        dateStringStream.clear();
         dateStringStream << DAYS_OF_WEEK[event_time.tm_wday] << " " << std::setw(2) << event_time.tm_mday << " " << MONTHS[event_time.tm_mon];
 
         auto event_date = std::chrono::system_clock::from_time_t(event_start_time_t);
@@ -87,17 +87,18 @@ CalendarEntry::CalendarEntry(const nlohmann::json &entry, const std::chrono::sys
     if (entry.contains(END_KEY) && entry[END_KEY].contains(DATE_KEY)) {
         std::string d = entry[END_KEY][DATE_KEY];
         std::istringstream ss(d);
-        ss >> std::get_time(&event_time, "%Y-%m-%d");
-        time_t event_end_time_t = mktime(&event_time);
+        ss >> std::get_time(&event_end_tm, "%Y-%m-%d");
+        time_t event_end_time_t = mktime(&event_end_tm);
         std::ostringstream oss;
         if (event_end_time_t == event_start_time_t + 86400) {
-            timeStringStream.clear();
+            timeStringStream.str("");
             timeStringStream << "All day";
         } else if (event_end_time_t > event_start_time_t) {
             event_end_time_t -= 1;
-            event_time = *localtime(&event_end_time_t);
-            dateStringStream << " to " << DAYS_OF_WEEK[event_time.tm_wday] << " " << std::setw(2) << event_time.tm_mday << " "
-                << MONTHS[event_time.tm_mon];
+            event_end_tm = *localtime(&event_end_time_t);
+            dateStringStream.str("");
+            dateStringStream << DAYS_OF_WEEK[event_time.tm_wday].substr(0, 3) << " " << std::setw(2) << event_time.tm_mday << "/" << (event_time.tm_mon + 1)
+                << " - " << DAYS_OF_WEEK[event_end_tm.tm_wday].substr(0, 3) << " " << std::setw(2) << event_end_tm.tm_mday << "/" << (event_end_tm.tm_mon + 1);
         }
     }
 
