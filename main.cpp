@@ -1,6 +1,7 @@
 #include <SDL.h>
 #include <iostream>
 #include <fstream>
+#include <gst/gst.h>
 
 #include "RenderableText.h"
 #include "HomeAssistant.h"
@@ -44,6 +45,8 @@ int main()
     }
 
     SDL_ShowCursor(SDL_DISABLE);
+
+    gst_init(nullptr, nullptr);
 
     HomeAssistant homeAssistant;
 

@@ -40,6 +40,7 @@ public:
 private:
     int m_x;
     int m_y;
+    unsigned int m_ramp_time;
     std::vector<std::shared_ptr<Renderable>> m_children;
     bool m_visible;
     bool m_transient{};
@@ -47,6 +48,7 @@ private:
 protected:
     void add_child(const std::shared_ptr<Renderable>& child, int x, int y);
     void clear_children();
+    void set_ramp_time(const unsigned int millis) { m_ramp_time = millis; };
     [[nodiscard]] bool skip_render(const std::chrono::time_point<std::chrono::steady_clock> &now) const;
     [[nodiscard]] float get_brightness(const std::chrono::time_point<std::chrono::steady_clock> &now);
 };

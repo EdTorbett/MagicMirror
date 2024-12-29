@@ -36,8 +36,9 @@ float time_ramp(const std::chrono::time_point<std::chrono::steady_clock> &now, c
 Renderable::Renderable():
 m_x(0),
 m_y(0),
-m_visible(false),
-m_children()
+m_ramp_time(2000),
+m_children(),
+m_visible(false)
 {
     //pass
 }
@@ -69,15 +70,15 @@ float Renderable::get_brightness(const std::chrono::time_point<std::chrono::stea
     float brightness = 0.0f;
     if (m_transient) {
         if (m_visible) {
-            brightness = time_ramp(now, m_lastVisibleChangeTime, m_lastVisibleChangeTime + std::chrono::seconds(2), m_lastVisibleChangeTime + std::chrono::seconds(8), m_lastVisibleChangeTime + std::chrono::seconds(10));
+            brightness = time_ramp(now, m_lastVisibleChangeTime, m_lastVisibleChangeTime + std::chrono::milliseconds(m_ramp_time), m_lastVisibleChangeTime + std::chrono::seconds(8), m_lastVisibleChangeTime + std::chrono::seconds(8) + std::chrono::milliseconds(m_ramp_time));
             if (now > m_lastVisibleChangeTime + std::chrono::seconds(10)) {
                 m_visible = false;
             }
         } else {
-            brightness = 1 - time_ramp(now, m_lastVisibleChangeTime, m_lastVisibleChangeTime + std::chrono::seconds(2));
+            brightness = 1 - time_ramp(now, m_lastVisibleChangeTime, m_lastVisibleChangeTime + std::chrono::milliseconds(m_ramp_time));
         }
     } else {
-        brightness = time_ramp(now, m_lastVisibleChangeTime, m_lastVisibleChangeTime + std::chrono::seconds(2));
+        brightness = time_ramp(now, m_lastVisibleChangeTime, m_lastVisibleChangeTime + std::chrono::milliseconds(m_ramp_time));
         if (!m_visible) {
             brightness = 1 - brightness;
         }
@@ -86,7 +87,7 @@ float Renderable::get_brightness(const std::chrono::time_point<std::chrono::stea
 }
 
 bool Renderable::skip_render(const std::chrono::time_point<std::chrono::steady_clock> &now) const {
-    return !m_visible && (now > m_lastVisibleChangeTime + std::chrono::seconds(2));
+    return !m_visible && (now > m_lastVisibleChangeTime + std::chrono::milliseconds(m_ramp_time));
 }
 
 void Renderable::set_pos(const int x, const int y) {

@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <cstdlib>
+#include <filesystem>
 
 const std::string DAYS_OF_WEEK[] = {
     "Sunday",
@@ -44,12 +45,21 @@ HomeAssistant::HomeAssistant() :
     m_welcome(nullptr),
     m_date(nullptr),
     m_clock(nullptr),
+    m_video(nullptr),
     m_connection(nullptr),
     m_ed_proximity("\uF369"),
     m_cath_proximity("\uF36F"),
     m_living_room_in_use(true),
-    m_running(true)
+    m_running(true),
+    m_random_time(300, 86400)
 {
+
+    std::random_device source;
+    std::random_device::result_type random_data[(std::mt19937::state_size - 1) / sizeof(source()) + 1];
+    std::generate(std::begin(random_data), std::end(random_data), std::ref(source));
+    std::seed_seq seeds(std::begin(random_data), std::end(random_data));
+    m_random_generator.seed(seeds);
+
     RestClient::init();
 
     m_calendar.set_pos(0, 200);
@@ -87,6 +97,11 @@ HomeAssistant::HomeAssistant() :
     m_welcome = new RenderableText("", 80, WHITE, FONTTYPE_REGULAR, ALIGN_CENTER);
     m_welcome->set_pos(540, 960);
     m_welcome->set_transient(true);
+
+    m_next_hidden_appearance = std::chrono::steady_clock::now() + std::chrono::seconds(m_random_time(m_random_generator));
+
+    m_video = new RenderableVideo();
+    m_video->set_pos(540, 960);
 
     system("ddcutil setvcp 10 0");
 }
@@ -156,6 +171,14 @@ void HomeAssistant::update() {
             this->m_calendar.set_visible(true, now);
             this->m_forecast.set_visible(true, now);
         }
+
+        if (m_video->finished() && !m_video->visible()) {
+            if (now > m_next_hidden_appearance) {
+                std::cout << "Video launch" << std::endl;
+                m_video->initialise("file:/home/magicmirror/ui/movies/mirror.webm");
+                m_next_hidden_appearance = std::chrono::steady_clock::now() + std::chrono::seconds(m_random_time(m_random_generator));
+            }
+        }
     } else {
         m_clock->set_visible(false, now);
         m_date->set_visible(false, now);
@@ -165,11 +188,15 @@ void HomeAssistant::update() {
         m_cath_proximity.set_visible(false, now);
     }
 
+    if (m_video->finished() && m_video->visible()) {
+        m_video->teardown();
+    }
 }
 
 void HomeAssistant::render(SDL_Renderer *renderer) {
     const auto& now = std::chrono::steady_clock::now();
 
+    m_video->render(renderer, now);
     m_welcome->render(renderer, now);
     this->m_calendar.render(renderer, now);
     this->m_forecast.render(renderer, now);

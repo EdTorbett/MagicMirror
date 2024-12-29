@@ -8,10 +8,12 @@
 
 #include <string>
 #include <connection.h>
+#include <random>
 
 #include "Calendar.h"
 #include "Proximity.h"
 #include "Forecast.h"
+#include "RenderableVideo.h"
 
 typedef enum Presence {
     PRESENCE_HOME = 0,
@@ -39,11 +41,15 @@ private:
     RenderableText *m_welcome;
     RenderableText *m_date;
     RenderableText *m_clock;
+    RenderableVideo *m_video;
+    std::chrono::time_point<std::chrono::steady_clock> m_next_hidden_appearance;
     RestClient::Connection *m_connection;
     Proximity m_ed_proximity;
     Proximity m_cath_proximity;
     bool m_living_room_in_use;
     bool m_running{};
+    std::uniform_int_distribution<uint32_t> m_random_time;
+    std::mt19937 m_random_generator;
 };
 
 
